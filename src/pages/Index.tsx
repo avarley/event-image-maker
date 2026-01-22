@@ -1,91 +1,64 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Wand2, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { TemplateUpload } from '@/components/TemplateUpload';
-import { TextConfigPanel } from '@/components/TextConfigPanel';
+import { TemplateList } from '@/components/TemplateList';
+import { TemplateEditor } from '@/components/TemplateEditor';
 import { EventSelector } from '@/components/EventSelector';
 import { ImagePreview } from '@/components/ImagePreview';
-import { useTransparencyDetection } from '@/hooks/useTransparencyDetection';
+import { useTemplateStorage } from '@/hooks/useTemplateStorage';
 import { useImageGenerator } from '@/hooks/useImageGenerator';
 import {
   EventData,
   TemplateConfig,
-  TextConfig,
-  TransparentRegion,
   GeneratedImage,
+  SavedTemplate,
 } from '@/types/imageGenerator';
-
-const DEFAULT_TEXT_CONFIG: TextConfig = {
-  fontFamily: 'Arial',
-  fontSize: 48,
-  color: '#ffffff',
-  x: 400,
-  y: 50,
-  maxWidth: 700,
-  textAlign: 'center',
-};
 
 const DEFAULT_FEED_URL = 'https://growthbook-tixel.s3.ap-southeast-2.amazonaws.com/tixel-tuesdays/top-events.json';
 
 const Index = () => {
-  const [templateConfig, setTemplateConfig] = useState<TemplateConfig>({
-    baseplate: null,
-    baseplateUrl: '',
-    transparentRegion: null,
-    textConfig: DEFAULT_TEXT_CONFIG,
-    overlays: [],
-  });
+  const {
+    templates,
+    activeTemplate,
+    activeTemplateId,
+    setActiveTemplateId,
+    createTemplate,
+    updateTemplate,
+    deleteTemplate,
+    duplicateTemplate,
+  } = useTemplateStorage();
 
   const [feedUrl, setFeedUrl] = useState(DEFAULT_FEED_URL);
   const [events, setEvents] = useState<EventData[]>([]);
   const [selectedEventIds, setSelectedEventIds] = useState<Set<string>>(new Set());
+  const [selectedTemplateIds, setSelectedTemplateIds] = useState<Set<string>>(new Set());
   const [isLoadingEvents, setIsLoadingEvents] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([]);
 
-  const { detectTransparentRegion } = useTransparencyDetection();
   const { generateImage } = useImageGenerator();
 
-  const handleBaseplateChange = useCallback((image: HTMLImageElement, dataUrl: string) => {
-    setTemplateConfig((prev) => ({
-      ...prev,
-      baseplate: image,
-      baseplateUrl: dataUrl,
-      textConfig: {
-        ...prev.textConfig,
-        x: Math.floor(image.width / 2),
-        maxWidth: image.width - 100,
-      },
-    }));
-  }, []);
+  // Get sample event name for preview
+  const sampleEventName = useMemo(() => {
+    const firstSelectedEvent = events.find((e) => selectedEventIds.has(e.EVENT_ID));
+    return firstSelectedEvent?.EVENT_NAME || 'Sample Event Name';
+  }, [events, selectedEventIds]);
 
-  const handleTransparentRegionDetected = useCallback((region: TransparentRegion | null) => {
-    setTemplateConfig((prev) => ({
-      ...prev,
-      transparentRegion: region,
-    }));
-    if (region) {
-      toast.success('Transparent region detected!');
-    } else {
-      toast.warning('No transparent region found in the template');
-    }
-  }, []);
-
-  const handleTextConfigChange = useCallback((textConfig: TextConfig) => {
-    setTemplateConfig((prev) => ({
-      ...prev,
-      textConfig,
-    }));
-  }, []);
+  const handleRenameTemplate = useCallback(
+    (id: string, name: string) => {
+      updateTemplate(id, { name });
+    },
+    [updateTemplate]
+  );
 
   const fetchEvents = useCallback(async () => {
     if (!feedUrl) return;
-    
+
     setIsLoadingEvents(true);
     try {
-      // Use CORS proxy for external URLs
       const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(feedUrl)}`;
       const response = await fetch(proxyUrl);
       const data = await response.json();
@@ -111,17 +84,57 @@ const Index = () => {
     });
   }, []);
 
-  const selectAll = useCallback(() => {
+  const selectAllEvents = useCallback(() => {
     setSelectedEventIds(new Set(events.map((e) => e.EVENT_ID)));
   }, [events]);
 
-  const deselectAll = useCallback(() => {
+  const deselectAllEvents = useCallback(() => {
     setSelectedEventIds(new Set());
   }, []);
 
+  const toggleTemplateForGeneration = useCallback((templateId: string) => {
+    setSelectedTemplateIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(templateId)) {
+        next.delete(templateId);
+      } else {
+        next.add(templateId);
+      }
+      return next;
+    });
+  }, []);
+
+  const selectAllTemplates = useCallback(() => {
+    setSelectedTemplateIds(new Set(templates.filter((t) => t.baseplateDataUrl).map((t) => t.id)));
+  }, [templates]);
+
+  const deselectAllTemplates = useCallback(() => {
+    setSelectedTemplateIds(new Set());
+  }, []);
+
+  // Convert SavedTemplate to TemplateConfig for image generation
+  const createTemplateConfig = useCallback(async (savedTemplate: SavedTemplate): Promise<TemplateConfig | null> => {
+    if (!savedTemplate.baseplateDataUrl) return null;
+
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        resolve({
+          baseplate: img,
+          baseplateUrl: savedTemplate.baseplateDataUrl,
+          transparentRegion: savedTemplate.transparentRegion,
+          textConfig: savedTemplate.textConfig,
+          overlays: [],
+        });
+      };
+      img.onerror = () => resolve(null);
+      img.src = savedTemplate.baseplateDataUrl;
+    });
+  }, []);
+
   const handleGenerate = useCallback(async () => {
-    if (!templateConfig.baseplate || !templateConfig.transparentRegion) {
-      toast.error('Please upload a template with a transparent region first');
+    if (selectedTemplateIds.size === 0) {
+      toast.error('Please select at least one template');
       return;
     }
 
@@ -134,105 +147,179 @@ const Index = () => {
     setGeneratedImages([]);
 
     const selectedEvents = events.filter((e) => selectedEventIds.has(e.EVENT_ID));
+    const selectedTemplates = templates.filter((t) => selectedTemplateIds.has(t.id));
     const results: GeneratedImage[] = [];
 
-    for (const event of selectedEvents) {
-      const result = await generateImage(event, templateConfig);
-      if (result) {
-        results.push(result);
-        setGeneratedImages([...results]);
+    for (const template of selectedTemplates) {
+      const templateConfig = await createTemplateConfig(template);
+      if (!templateConfig || !templateConfig.transparentRegion) continue;
+
+      for (const event of selectedEvents) {
+        const result = await generateImage(event, templateConfig);
+        if (result) {
+          results.push({
+            ...result,
+            templateId: template.id,
+            templateName: template.name,
+          });
+          setGeneratedImages([...results]);
+        }
       }
     }
 
     setIsGenerating(false);
     toast.success(`Generated ${results.length} images`);
-  }, [templateConfig, selectedEventIds, events, generateImage]);
+  }, [selectedTemplateIds, selectedEventIds, events, templates, createTemplateConfig, generateImage]);
 
   const handleDownload = useCallback((image: GeneratedImage) => {
     const link = document.createElement('a');
     link.href = image.dataUrl;
-    link.download = `${image.eventName.replace(/[^a-z0-9]/gi, '_')}_${image.eventId}.png`;
+    link.download = `${image.templateName.replace(/[^a-z0-9]/gi, '_')}_${image.eventName.replace(/[^a-z0-9]/gi, '_')}_${image.eventId}.png`;
     link.click();
     toast.success(`Downloaded ${image.eventName}`);
   }, []);
 
+  const validTemplatesCount = templates.filter((t) => t.baseplateDataUrl && t.transparentRegion).length;
+
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="text-center space-y-2">
+    <div className="min-h-screen bg-background">
+      <div className="p-6 border-b">
+        <div className="max-w-7xl mx-auto text-center space-y-2">
           <h1 className="text-4xl font-bold">Bulk Image Generator</h1>
           <p className="text-muted-foreground">
-            Generate promotional images by combining your template with event data
+            Generate promotional images by combining your templates with event data
           </p>
         </div>
+      </div>
 
-        <Tabs defaultValue="template" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="template">1. Template</TabsTrigger>
-            <TabsTrigger value="events">2. Events</TabsTrigger>
-            <TabsTrigger value="generate">3. Generate</TabsTrigger>
-          </TabsList>
+      <Tabs defaultValue="template" className="max-w-7xl mx-auto p-6">
+        <TabsList className="grid w-full grid-cols-3 mb-6">
+          <TabsTrigger value="template">
+            1. Templates {templates.length > 0 && `(${templates.length})`}
+          </TabsTrigger>
+          <TabsTrigger value="events">
+            2. Events {selectedEventIds.size > 0 && `(${selectedEventIds.size})`}
+          </TabsTrigger>
+          <TabsTrigger value="generate">3. Generate</TabsTrigger>
+        </TabsList>
 
-          <TabsContent value="template" className="space-y-6">
-            <TemplateUpload
-              baseplate={templateConfig.baseplate}
-              transparentRegion={templateConfig.transparentRegion}
-              onBaseplateChange={handleBaseplateChange}
-              onTransparentRegionDetected={handleTransparentRegionDetected}
-              detectTransparentRegion={detectTransparentRegion}
+        <TabsContent value="template" className="mt-0">
+          <div className="flex h-[calc(100vh-280px)] min-h-[500px] border rounded-lg overflow-hidden">
+            <div className="w-64 flex-shrink-0">
+              <TemplateList
+                templates={templates}
+                activeTemplateId={activeTemplateId}
+                onSelectTemplate={setActiveTemplateId}
+                onCreateTemplate={createTemplate}
+                onDeleteTemplate={deleteTemplate}
+                onDuplicateTemplate={duplicateTemplate}
+                onRenameTemplate={handleRenameTemplate}
+              />
+            </div>
+            <TemplateEditor
+              template={activeTemplate}
+              onUpdateTemplate={updateTemplate}
+              sampleEventName={sampleEventName}
             />
+          </div>
+        </TabsContent>
 
-            <TextConfigPanel
-              textConfig={templateConfig.textConfig}
-              onTextConfigChange={handleTextConfigChange}
-              baseplateWidth={templateConfig.baseplate?.width}
-              baseplateHeight={templateConfig.baseplate?.height}
-            />
-          </TabsContent>
+        <TabsContent value="events">
+          <EventSelector
+            events={events}
+            selectedEventIds={selectedEventIds}
+            isLoading={isLoadingEvents}
+            feedUrl={feedUrl}
+            onFeedUrlChange={setFeedUrl}
+            onFetchEvents={fetchEvents}
+            onToggleEvent={toggleEvent}
+            onSelectAll={selectAllEvents}
+            onDeselectAll={deselectAllEvents}
+          />
+        </TabsContent>
 
-          <TabsContent value="events">
-            <EventSelector
-              events={events}
-              selectedEventIds={selectedEventIds}
-              isLoading={isLoadingEvents}
-              feedUrl={feedUrl}
-              onFeedUrlChange={setFeedUrl}
-              onFetchEvents={fetchEvents}
-              onToggleEvent={toggleEvent}
-              onSelectAll={selectAll}
-              onDeselectAll={deselectAll}
-            />
-          </TabsContent>
-
-          <TabsContent value="generate" className="space-y-6">
-            <div className="flex justify-center">
-              <Button
-                size="lg"
-                onClick={handleGenerate}
-                disabled={isGenerating || !templateConfig.baseplate || selectedEventIds.size === 0}
-              >
-                {isGenerating ? (
-                  <>
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <Wand2 className="mr-2 h-5 w-5" />
-                    Generate {selectedEventIds.size} Image{selectedEventIds.size !== 1 ? 's' : ''}
-                  </>
-                )}
-              </Button>
+        <TabsContent value="generate" className="space-y-6">
+          {/* Template Selection for Generation */}
+          <div className="border rounded-lg p-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-medium">Select Templates to Generate</h3>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={selectAllTemplates}>
+                  Select All
+                </Button>
+                <Button variant="outline" size="sm" onClick={deselectAllTemplates}>
+                  Deselect All
+                </Button>
+              </div>
             </div>
 
-            <ImagePreview
-              generatedImages={generatedImages}
-              isGenerating={isGenerating}
-              onDownload={handleDownload}
-            />
-          </TabsContent>
-        </Tabs>
-      </div>
+            {validTemplatesCount === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No valid templates. Create a template with a transparent region first.
+              </p>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {templates
+                  .filter((t) => t.baseplateDataUrl && t.transparentRegion)
+                  .map((template) => (
+                    <label
+                      key={template.id}
+                      className="flex items-start gap-3 p-3 border rounded-lg cursor-pointer hover:bg-muted/50"
+                    >
+                      <Checkbox
+                        checked={selectedTemplateIds.has(template.id)}
+                        onCheckedChange={() => toggleTemplateForGeneration(template.id)}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="aspect-video rounded bg-muted mb-1 overflow-hidden">
+                          <img
+                            src={template.baseplateDataUrl}
+                            alt={template.name}
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
+                        <span className="text-sm font-medium truncate block">{template.name}</span>
+                      </div>
+                    </label>
+                  ))}
+              </div>
+            )}
+          </div>
+
+          {/* Summary and Generate Button */}
+          <div className="flex flex-col items-center gap-4">
+            <p className="text-muted-foreground">
+              {selectedTemplateIds.size} template{selectedTemplateIds.size !== 1 ? 's' : ''} ×{' '}
+              {selectedEventIds.size} event{selectedEventIds.size !== 1 ? 's' : ''} ={' '}
+              <strong>{selectedTemplateIds.size * selectedEventIds.size} images</strong>
+            </p>
+            <Button
+              size="lg"
+              onClick={handleGenerate}
+              disabled={isGenerating || selectedTemplateIds.size === 0 || selectedEventIds.size === 0}
+            >
+              {isGenerating ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Wand2 className="mr-2 h-5 w-5" />
+                  Generate {selectedTemplateIds.size * selectedEventIds.size} Image
+                  {selectedTemplateIds.size * selectedEventIds.size !== 1 ? 's' : ''}
+                </>
+              )}
+            </Button>
+          </div>
+
+          <ImagePreview
+            generatedImages={generatedImages}
+            isGenerating={isGenerating}
+            onDownload={handleDownload}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
