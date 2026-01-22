@@ -48,7 +48,7 @@ export const TemplateList = ({
   return (
     <div className="flex flex-col h-full border-r bg-muted/30">
       <div className="p-3 border-b">
-        <Button onClick={onCreateTemplate} className="w-full" size="sm">
+        <Button onClick={() => onCreateTemplate()} className="w-full" size="sm">
           <Plus className="h-4 w-4 mr-2" />
           New Template
         </Button>
@@ -105,7 +105,7 @@ export const TemplateList = ({
                     <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => saveEdit(template.id)}>
                       <Check className="h-3 w-3" />
                     </Button>
-                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={cancelEdit}>
+                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => cancelEdit()}>
                       <X className="h-3 w-3" />
                     </Button>
                   </div>
