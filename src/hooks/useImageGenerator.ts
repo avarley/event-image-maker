@@ -107,6 +107,8 @@ export const useImageGenerator = () => {
       return {
         eventId: event.EVENT_ID,
         eventName: event.EVENT_NAME,
+        templateId: '',
+        templateName: '',
         dataUrl: canvas.toDataURL('image/png'),
       };
     } catch (error) {

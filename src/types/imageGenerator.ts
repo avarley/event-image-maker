@@ -55,8 +55,20 @@ export interface TemplateConfig {
   overlays: OverlayConfig[];
 }
 
+export interface SavedTemplate {
+  id: string;
+  name: string;
+  baseplateDataUrl: string;
+  transparentRegion: TransparentRegion | null;
+  textConfig: TextConfig;
+  createdAt: number;
+  updatedAt: number;
+}
+
 export interface GeneratedImage {
   eventId: string;
   eventName: string;
+  templateId: string;
+  templateName: string;
   dataUrl: string;
 }
