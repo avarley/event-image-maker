@@ -15,6 +15,7 @@ interface TemplateEditorProps {
 }
 
 const FONT_FAMILIES = [
+  'Roboto',
   'Arial',
   'Helvetica',
   'Georgia',
