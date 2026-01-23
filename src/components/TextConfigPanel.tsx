@@ -1,8 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Type } from 'lucide-react';
+import { Type, RotateCcw } from 'lucide-react';
 import { TextConfig } from '@/types/imageGenerator';
 
 interface TextConfigPanelProps {
@@ -13,6 +14,7 @@ interface TextConfigPanelProps {
 }
 
 const FONT_FAMILIES = [
+  'Roboto',
   'Arial',
   'Helvetica',
   'Georgia',
@@ -24,6 +26,16 @@ const FONT_FAMILIES = [
   'Arial Black',
   'Lucida Console',
 ];
+
+const DEFAULT_TEXT_CONFIG: TextConfig = {
+  fontFamily: 'Roboto',
+  fontSize: 56,
+  color: '#ffffff',
+  x: 540,
+  y: 940,
+  maxWidth: 550,
+  textAlign: 'center',
+};
 
 export const TextConfigPanel = ({
   textConfig,
@@ -38,12 +50,21 @@ export const TextConfigPanel = ({
     });
   };
 
+  const handleResetToDefaults = () => {
+    onTextConfigChange(DEFAULT_TEXT_CONFIG);
+  };
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Type className="h-5 w-5" />
           Text Configuration
+          <div className="flex-1" />
+          <Button variant="outline" size="sm" onClick={handleResetToDefaults}>
+            <RotateCcw className="h-3 w-3 mr-1" />
+            Reset
+          </Button>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
