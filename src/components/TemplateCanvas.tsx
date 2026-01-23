@@ -1,26 +1,41 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
-import { TextConfig } from '@/types/imageGenerator';
+import { TextConfig, SavedOverlay } from '@/types/imageGenerator';
 
 interface TemplateCanvasProps {
   baseplateUrl: string;
   textConfig: TextConfig;
   textEnabled: boolean;
   sampleText: string;
+  overlays: SavedOverlay[];
   onTextConfigChange: (config: TextConfig) => void;
+  onOverlaysChange: (overlays: SavedOverlay[]) => void;
 }
+
+type ActionType = 'move' | 'resize' | null;
+type ResizeCorner = 'nw' | 'ne' | 'sw' | 'se' | null;
 
 export const TemplateCanvas = ({
   baseplateUrl,
   textConfig,
   textEnabled,
   sampleText,
+  overlays,
   onTextConfigChange,
+  onOverlaysChange,
 }: TemplateCanvasProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isDragging, setIsDragging] = useState(false);
+  const [isDraggingText, setIsDraggingText] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [baseplateSize, setBaseplateSize] = useState({ width: 0, height: 0 });
   const [scale, setScale] = useState(1);
+
+  // Overlay interaction state
+  const [activeOverlayId, setActiveOverlayId] = useState<string | null>(null);
+  const [overlayAction, setOverlayAction] = useState<ActionType>(null);
+  const [resizeCorner, setResizeCorner] = useState<ResizeCorner>(null);
+  const [overlayDragOffset, setOverlayDragOffset] = useState({ x: 0, y: 0 });
+  const [initialOverlaySize, setInitialOverlaySize] = useState({ width: 0, height: 0 });
+  const [initialMousePos, setInitialMousePos] = useState({ x: 0, y: 0 });
 
   // Load baseplate dimensions
   useEffect(() => {
@@ -48,41 +63,172 @@ export const TemplateCanvas = ({
       const x = (e.clientX - rect.left) / scale;
       const y = (e.clientY - rect.top) / scale;
 
-      // Check if click is near text position
-      const textX = textConfig.x;
-      const textY = textConfig.y;
-      const hitRadius = 50;
+      // Check if click is near text position (only if text is enabled)
+      if (textEnabled) {
+        const textX = textConfig.x;
+        const textY = textConfig.y;
+        const hitRadius = 50;
 
-      if (
-        Math.abs(x - textX) < hitRadius + textConfig.maxWidth / 2 &&
-        Math.abs(y - textY) < hitRadius
-      ) {
-        setIsDragging(true);
-        setDragOffset({ x: x - textX, y: y - textY });
+        if (
+          Math.abs(x - textX) < hitRadius + textConfig.maxWidth / 2 &&
+          Math.abs(y - textY) < hitRadius
+        ) {
+          setIsDraggingText(true);
+          setDragOffset({ x: x - textX, y: y - textY });
+          return;
+        }
       }
     },
-    [textConfig, scale]
+    [textConfig, scale, textEnabled]
   );
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent) => {
-      if (!isDragging || !containerRef.current) return;
+      if (!containerRef.current) return;
       const rect = containerRef.current.getBoundingClientRect();
-      const x = (e.clientX - rect.left) / scale - dragOffset.x;
-      const y = (e.clientY - rect.top) / scale - dragOffset.y;
+      const mouseX = (e.clientX - rect.left) / scale;
+      const mouseY = (e.clientY - rect.top) / scale;
 
-      onTextConfigChange({
-        ...textConfig,
-        x: Math.max(0, Math.min(baseplateSize.width, Math.round(x))),
-        y: Math.max(0, Math.min(baseplateSize.height, Math.round(y))),
-      });
+      // Handle text dragging
+      if (isDraggingText) {
+        const x = mouseX - dragOffset.x;
+        const y = mouseY - dragOffset.y;
+
+        onTextConfigChange({
+          ...textConfig,
+          x: Math.max(0, Math.min(baseplateSize.width, Math.round(x))),
+          y: Math.max(0, Math.min(baseplateSize.height, Math.round(y))),
+        });
+        return;
+      }
+
+      // Handle overlay dragging/resizing
+      if (activeOverlayId && overlayAction) {
+        const overlay = overlays.find((o) => o.id === activeOverlayId);
+        if (!overlay) return;
+
+        if (overlayAction === 'move') {
+          const newX = mouseX - overlayDragOffset.x;
+          const newY = mouseY - overlayDragOffset.y;
+
+          const updatedOverlays = overlays.map((o) =>
+            o.id === activeOverlayId
+              ? {
+                  ...o,
+                  x: Math.max(0, Math.min(baseplateSize.width - o.width, Math.round(newX))),
+                  y: Math.max(0, Math.min(baseplateSize.height - o.height, Math.round(newY))),
+                }
+              : o
+          );
+          onOverlaysChange(updatedOverlays);
+        } else if (overlayAction === 'resize' && resizeCorner) {
+          const deltaX = mouseX - initialMousePos.x;
+          const deltaY = mouseY - initialMousePos.y;
+          const aspectRatio = initialOverlaySize.width / initialOverlaySize.height;
+
+          let newWidth = initialOverlaySize.width;
+          let newHeight = initialOverlaySize.height;
+          let newX = overlay.x;
+          let newY = overlay.y;
+
+          // Calculate resize based on corner
+          if (resizeCorner === 'se') {
+            newWidth = Math.max(50, initialOverlaySize.width + deltaX);
+            newHeight = newWidth / aspectRatio;
+          } else if (resizeCorner === 'sw') {
+            newWidth = Math.max(50, initialOverlaySize.width - deltaX);
+            newHeight = newWidth / aspectRatio;
+            newX = overlay.x + (initialOverlaySize.width - newWidth);
+          } else if (resizeCorner === 'ne') {
+            newWidth = Math.max(50, initialOverlaySize.width + deltaX);
+            newHeight = newWidth / aspectRatio;
+            newY = overlay.y + (initialOverlaySize.height - newHeight);
+          } else if (resizeCorner === 'nw') {
+            newWidth = Math.max(50, initialOverlaySize.width - deltaX);
+            newHeight = newWidth / aspectRatio;
+            newX = overlay.x + (initialOverlaySize.width - newWidth);
+            newY = overlay.y + (initialOverlaySize.height - newHeight);
+          }
+
+          const updatedOverlays = overlays.map((o) =>
+            o.id === activeOverlayId
+              ? {
+                  ...o,
+                  x: Math.round(newX),
+                  y: Math.round(newY),
+                  width: Math.round(newWidth),
+                  height: Math.round(newHeight),
+                }
+              : o
+          );
+          onOverlaysChange(updatedOverlays);
+        }
+      }
     },
-    [isDragging, dragOffset, scale, baseplateSize, textConfig, onTextConfigChange]
+    [
+      isDraggingText,
+      dragOffset,
+      scale,
+      baseplateSize,
+      textConfig,
+      onTextConfigChange,
+      activeOverlayId,
+      overlayAction,
+      overlayDragOffset,
+      resizeCorner,
+      initialOverlaySize,
+      initialMousePos,
+      overlays,
+      onOverlaysChange,
+    ]
   );
 
   const handleMouseUp = useCallback(() => {
-    setIsDragging(false);
+    setIsDraggingText(false);
+    setActiveOverlayId(null);
+    setOverlayAction(null);
+    setResizeCorner(null);
   }, []);
+
+  const handleOverlayMouseDown = useCallback(
+    (e: React.MouseEvent, overlayId: string) => {
+      e.stopPropagation();
+      if (!containerRef.current) return;
+
+      const rect = containerRef.current.getBoundingClientRect();
+      const mouseX = (e.clientX - rect.left) / scale;
+      const mouseY = (e.clientY - rect.top) / scale;
+
+      const overlay = overlays.find((o) => o.id === overlayId);
+      if (!overlay) return;
+
+      setActiveOverlayId(overlayId);
+      setOverlayAction('move');
+      setOverlayDragOffset({ x: mouseX - overlay.x, y: mouseY - overlay.y });
+    },
+    [overlays, scale]
+  );
+
+  const handleResizeMouseDown = useCallback(
+    (e: React.MouseEvent, overlayId: string, corner: ResizeCorner) => {
+      e.stopPropagation();
+      if (!containerRef.current) return;
+
+      const rect = containerRef.current.getBoundingClientRect();
+      const mouseX = (e.clientX - rect.left) / scale;
+      const mouseY = (e.clientY - rect.top) / scale;
+
+      const overlay = overlays.find((o) => o.id === overlayId);
+      if (!overlay) return;
+
+      setActiveOverlayId(overlayId);
+      setOverlayAction('resize');
+      setResizeCorner(corner);
+      setInitialMousePos({ x: mouseX, y: mouseY });
+      setInitialOverlaySize({ width: overlay.width, height: overlay.height });
+    },
+    [overlays, scale]
+  );
 
   // Calculate text alignment offset for display
   const getTextAlignOffset = () => {
@@ -105,6 +251,58 @@ export const TemplateCanvas = ({
     );
   }
 
+  // Sort overlays by layer for proper rendering order
+  const belowOverlays = overlays.filter((o) => o.layer === 'below');
+  const aboveOverlays = overlays.filter((o) => o.layer === 'above');
+
+  const renderOverlay = (overlay: SavedOverlay) => {
+    const isActive = activeOverlayId === overlay.id;
+
+    return (
+      <div
+        key={overlay.id}
+        className={`absolute group ${isActive ? 'ring-2 ring-purple-500 ring-offset-2' : ''}`}
+        style={{
+          left: overlay.x * scale,
+          top: overlay.y * scale,
+          width: overlay.width * scale,
+          height: overlay.height * scale,
+          cursor: overlayAction === 'move' && isActive ? 'grabbing' : 'grab',
+        }}
+        onMouseDown={(e) => handleOverlayMouseDown(e, overlay.id)}
+      >
+        <img
+          src={overlay.dataUrl}
+          alt="Overlay"
+          className="w-full h-full object-contain pointer-events-none"
+          draggable={false}
+        />
+        
+        {/* Border and label */}
+        <div className="absolute inset-0 border-2 border-dashed border-purple-500 bg-purple-500/10 group-hover:bg-purple-500/20 pointer-events-none" />
+        <span className="absolute -top-6 left-0 text-xs bg-purple-500 text-white px-1 rounded whitespace-nowrap">
+          Overlay ({overlay.layer})
+        </span>
+
+        {/* Resize handles */}
+        {['nw', 'ne', 'sw', 'se'].map((corner) => (
+          <div
+            key={corner}
+            className="absolute w-3 h-3 bg-purple-500 border border-white rounded-sm opacity-0 group-hover:opacity-100 transition-opacity"
+            style={{
+              top: corner.includes('n') ? -6 : undefined,
+              bottom: corner.includes('s') ? -6 : undefined,
+              left: corner.includes('w') ? -6 : undefined,
+              right: corner.includes('e') ? -6 : undefined,
+              cursor: `${corner}-resize`,
+            }}
+            onMouseDown={(e) => handleResizeMouseDown(e, overlay.id, corner as ResizeCorner)}
+          />
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div
       ref={containerRef}
@@ -112,7 +310,7 @@ export const TemplateCanvas = ({
       style={{
         width: baseplateSize.width * scale,
         height: baseplateSize.height * scale,
-        cursor: isDragging ? 'grabbing' : 'default',
+        cursor: isDraggingText ? 'grabbing' : 'default',
       }}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
@@ -127,11 +325,17 @@ export const TemplateCanvas = ({
         draggable={false}
       />
 
+      {/* Overlays BELOW event image layer */}
+      {belowOverlays.map(renderOverlay)}
+
+      {/* Overlays ABOVE event image layer */}
+      {aboveOverlays.map(renderOverlay)}
+
       {/* Draggable text element - only show if text is enabled */}
       {textEnabled && (
         <div
           className={`absolute transition-shadow ${
-            isDragging ? 'ring-2 ring-primary ring-offset-2' : ''
+            isDraggingText ? 'ring-2 ring-primary ring-offset-2' : ''
           }`}
           style={{
             left: (textConfig.x - getTextAlignOffset()) * scale,
@@ -165,8 +369,8 @@ export const TemplateCanvas = ({
         </div>
       )}
 
-      {/* Crosshair guides when dragging */}
-      {isDragging && textEnabled && (
+      {/* Crosshair guides when dragging text */}
+      {isDraggingText && textEnabled && (
         <>
           <div
             className="absolute h-full w-px bg-primary/50 pointer-events-none"
