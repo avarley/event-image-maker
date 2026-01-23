@@ -351,17 +351,18 @@ export const TemplateCanvas = ({
               textAlign: textConfig.textAlign,
             }}
           >
-            <span
-              className="break-words font-bold"
+            <div
+              className="font-bold whitespace-pre-wrap"
               style={{
                 fontFamily: textConfig.fontFamily,
                 fontSize: textConfig.fontSize * scale,
                 color: textConfig.color,
                 textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
+                lineHeight: 1.2,
               }}
             >
               {sampleText || 'Sample Event Name'}
-            </span>
+            </div>
           </div>
           <span className="absolute -top-6 left-0 text-xs bg-green-500 text-white px-1 rounded">
             Text (drag to move)

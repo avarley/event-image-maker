@@ -21,6 +21,15 @@ export interface EventData {
   PRIMARY_URL: string;
 }
 
+export interface TextFieldConfig {
+  showEventName: boolean;
+  showDate: boolean;
+  showLocation: boolean;
+  showVenue: boolean;
+  dateFormat: 'short' | 'long' | 'full'; // e.g., "Jan 15", "January 15, 2025", "Friday, January 15, 2025"
+  locationFormat: 'city' | 'city-state' | 'city-country'; // e.g., "Austin", "Austin, TX", "Austin, USA"
+}
+
 export interface TextConfig {
   fontFamily: string;
   fontSize: number;
@@ -29,6 +38,7 @@ export interface TextConfig {
   y: number;
   maxWidth: number;
   textAlign: CanvasTextAlign;
+  fields: TextFieldConfig;
 }
 
 export interface OverlayConfig {
@@ -77,3 +87,13 @@ export interface GeneratedImage {
   templateName: string;
   dataUrl: string;
 }
+
+// Default field configuration
+export const DEFAULT_TEXT_FIELDS: TextFieldConfig = {
+  showEventName: true,
+  showDate: false,
+  showLocation: false,
+  showVenue: false,
+  dateFormat: 'long',
+  locationFormat: 'city-state',
+};

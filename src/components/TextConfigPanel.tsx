@@ -4,7 +4,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Type, RotateCcw } from 'lucide-react';
-import { TextConfig } from '@/types/imageGenerator';
+import { TextConfig, DEFAULT_TEXT_FIELDS } from '@/types/imageGenerator';
 
 interface TextConfigPanelProps {
   textConfig: TextConfig;
@@ -35,6 +35,7 @@ const DEFAULT_TEXT_CONFIG: TextConfig = {
   y: 940,
   maxWidth: 550,
   textAlign: 'center',
+  fields: DEFAULT_TEXT_FIELDS,
 };
 
 export const TextConfigPanel = ({
