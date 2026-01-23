@@ -1,12 +1,12 @@
 import { useCallback } from 'react';
-import { Upload, Image as ImageIcon, RotateCcw } from 'lucide-react';
+import { Upload, Image as ImageIcon, RotateCcw, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { SavedTemplate, TextConfig } from '@/types/imageGenerator';
+import { SavedTemplate, TextConfig, SavedOverlay } from '@/types/imageGenerator';
 import { TemplateCanvas } from './TemplateCanvas';
 
 interface TemplateEditorProps {
@@ -112,6 +112,87 @@ export const TemplateEditor = ({
     }
   }, [template, onUpdateTemplate]);
 
+  const handleOverlayUpload = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (!template) return;
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const dataUrl = event.target?.result as string;
+          
+          // Scale to fit within 30% of template width
+          let baseplateWidth = 1080; // default
+          if (template.baseplateDataUrl) {
+            const baseplateImg = new Image();
+            baseplateImg.src = template.baseplateDataUrl;
+            baseplateWidth = baseplateImg.width || 1080;
+          }
+          
+          const maxOverlayWidth = baseplateWidth * 0.3;
+          const aspectRatio = img.width / img.height;
+          const width = Math.min(img.width, maxOverlayWidth);
+          const height = width / aspectRatio;
+          
+          // Center the overlay
+          const x = Math.floor((baseplateWidth - width) / 2);
+          const y = 100;
+          
+          const newOverlay: SavedOverlay = {
+            id: crypto.randomUUID(),
+            dataUrl,
+            x,
+            y,
+            width: Math.round(width),
+            height: Math.round(height),
+            layer: 'above',
+          };
+
+          onUpdateTemplate(template.id, {
+            overlays: [...(template.overlays || []), newOverlay],
+          });
+        };
+        img.src = event.target?.result as string;
+      };
+      reader.readAsDataURL(file);
+      
+      // Reset input so same file can be uploaded again
+      e.target.value = '';
+    },
+    [template, onUpdateTemplate]
+  );
+
+  const handleOverlayLayerChange = useCallback(
+    (overlayId: string, layer: 'above' | 'below') => {
+      if (!template) return;
+      const updatedOverlays = (template.overlays || []).map((o) =>
+        o.id === overlayId ? { ...o, layer } : o
+      );
+      onUpdateTemplate(template.id, { overlays: updatedOverlays });
+    },
+    [template, onUpdateTemplate]
+  );
+
+  const handleDeleteOverlay = useCallback(
+    (overlayId: string) => {
+      if (!template) return;
+      const updatedOverlays = (template.overlays || []).filter((o) => o.id !== overlayId);
+      onUpdateTemplate(template.id, { overlays: updatedOverlays });
+    },
+    [template, onUpdateTemplate]
+  );
+
+  const handleOverlaysChange = useCallback(
+    (overlays: SavedOverlay[]) => {
+      if (!template) return;
+      onUpdateTemplate(template.id, { overlays });
+    },
+    [template, onUpdateTemplate]
+  );
+
   if (!template) {
     return (
       <div className="flex-1 flex items-center justify-center bg-muted/20">
@@ -149,7 +230,7 @@ export const TemplateEditor = ({
             <span className="text-sm font-medium">Live Preview</span>
             {template.baseplateDataUrl && (
               <span className="text-xs text-muted-foreground">
-                Drag the green text box to reposition
+                Drag elements to reposition • Drag corners to resize overlays
               </span>
             )}
           </div>
@@ -158,10 +239,81 @@ export const TemplateEditor = ({
             textConfig={template.textConfig}
             textEnabled={template.textEnabled ?? true}
             sampleText={sampleEventName}
+            overlays={template.overlays || []}
             onTextConfigChange={handleTextConfigChange}
+            onOverlaysChange={handleOverlaysChange}
           />
         </CardContent>
       </Card>
+
+      {/* Overlays Management */}
+      {template.baseplateDataUrl && (
+        <Card>
+          <CardContent className="p-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">Overlays</span>
+              <Button variant="outline" size="sm" asChild>
+                <label className="cursor-pointer">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Overlay
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    className="hidden"
+                    onChange={handleOverlayUpload}
+                  />
+                </label>
+              </Button>
+            </div>
+
+            {(template.overlays || []).length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                No overlays added. Upload an image to layer on top of or below the event image.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {(template.overlays || []).map((overlay, index) => (
+                  <div
+                    key={overlay.id}
+                    className="flex items-center gap-3 p-2 border rounded-lg bg-background"
+                  >
+                    <img
+                      src={overlay.dataUrl}
+                      alt={`Overlay ${index + 1}`}
+                      className="w-12 h-12 object-contain rounded border bg-muted"
+                    />
+                    <span className="text-sm flex-1 truncate">
+                      Overlay {index + 1}
+                    </span>
+                    <Select
+                      value={overlay.layer}
+                      onValueChange={(value) =>
+                        handleOverlayLayerChange(overlay.id, value as 'above' | 'below')
+                      }
+                    >
+                      <SelectTrigger className="w-32">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="below">Below Image</SelectItem>
+                        <SelectItem value="above">Above Image</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDeleteOverlay(overlay.id)}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Text Configuration */}
       {template.baseplateDataUrl && (
