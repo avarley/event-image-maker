@@ -227,8 +227,17 @@ export const TemplateEditor = ({
     
     if (fields.showEventName) lines.push(sampleEventName || SAMPLE_EVENT.name);
     if (fields.showDate) lines.push(SAMPLE_EVENT.date);
-    if (fields.showVenue) lines.push(SAMPLE_EVENT.venue);
-    if (fields.showLocation) lines.push(SAMPLE_EVENT.location);
+    
+    // Concatenate venue and location
+    const venuePart = fields.showVenue ? SAMPLE_EVENT.venue : '';
+    const locationPart = fields.showLocation ? SAMPLE_EVENT.location : '';
+    if (venuePart && locationPart) {
+      lines.push(`${venuePart}, ${locationPart}`);
+    } else if (venuePart) {
+      lines.push(venuePart);
+    } else if (locationPart) {
+      lines.push(locationPart);
+    }
     
     return lines.join('\n') || 'No fields selected';
   }, [template, sampleEventName]);
