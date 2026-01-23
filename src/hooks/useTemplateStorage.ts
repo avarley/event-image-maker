@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { SavedTemplate, TextConfig, TransparentRegion } from '@/types/imageGenerator';
+import { SavedTemplate, TextConfig } from '@/types/imageGenerator';
 
 const STORAGE_KEY = 'bulk-image-generator-templates';
 
@@ -43,7 +43,6 @@ export const useTemplateStorage = () => {
       id: crypto.randomUUID(),
       name,
       baseplateDataUrl: '',
-      transparentRegion: null,
       textConfig: DEFAULT_TEXT_CONFIG,
       createdAt: Date.now(),
       updatedAt: Date.now(),

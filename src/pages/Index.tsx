@@ -122,7 +122,6 @@ const Index = () => {
         resolve({
           baseplate: img,
           baseplateUrl: savedTemplate.baseplateDataUrl,
-          transparentRegion: savedTemplate.transparentRegion,
           textConfig: savedTemplate.textConfig,
           overlays: [],
         });
@@ -152,7 +151,7 @@ const Index = () => {
 
     for (const template of selectedTemplates) {
       const templateConfig = await createTemplateConfig(template);
-      if (!templateConfig || !templateConfig.transparentRegion) continue;
+      if (!templateConfig) continue;
 
       for (const event of selectedEvents) {
         const result = await generateImage(event, templateConfig);
@@ -179,7 +178,7 @@ const Index = () => {
     toast.success(`Downloaded ${image.eventName}`);
   }, []);
 
-  const validTemplatesCount = templates.filter((t) => t.baseplateDataUrl && t.transparentRegion).length;
+  const validTemplatesCount = templates.filter((t) => t.baseplateDataUrl).length;
 
   return (
     <div className="min-h-screen bg-background">
@@ -255,12 +254,12 @@ const Index = () => {
 
             {validTemplatesCount === 0 ? (
               <p className="text-sm text-muted-foreground">
-                No valid templates. Create a template with a transparent region first.
+                No valid templates. Upload a template image first.
               </p>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {templates
-                  .filter((t) => t.baseplateDataUrl && t.transparentRegion)
+                  .filter((t) => t.baseplateDataUrl)
                   .map((template) => (
                     <label
                       key={template.id}

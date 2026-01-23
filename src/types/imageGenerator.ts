@@ -21,13 +21,6 @@ export interface EventData {
   PRIMARY_URL: string;
 }
 
-export interface TransparentRegion {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
 export interface TextConfig {
   fontFamily: string;
   fontSize: number;
@@ -50,7 +43,6 @@ export interface OverlayConfig {
 export interface TemplateConfig {
   baseplate: HTMLImageElement | null;
   baseplateUrl: string;
-  transparentRegion: TransparentRegion | null;
   textConfig: TextConfig;
   overlays: OverlayConfig[];
 }
@@ -59,7 +51,6 @@ export interface SavedTemplate {
   id: string;
   name: string;
   baseplateDataUrl: string;
-  transparentRegion: TransparentRegion | null;
   textConfig: TextConfig;
   createdAt: number;
   updatedAt: number;
