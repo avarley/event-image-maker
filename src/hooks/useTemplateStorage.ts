@@ -5,11 +5,11 @@ const STORAGE_KEY = 'bulk-image-generator-templates';
 
 const DEFAULT_TEXT_CONFIG: TextConfig = {
   fontFamily: 'Arial',
-  fontSize: 48,
+  fontSize: 56,
   color: '#ffffff',
   x: 400,
   y: 50,
-  maxWidth: 700,
+  maxWidth: 500,
   textAlign: 'center',
 };
 
