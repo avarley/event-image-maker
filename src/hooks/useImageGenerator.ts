@@ -38,40 +38,30 @@ export const useImageGenerator = () => {
       canvas.width = canvasWidth;
       canvas.height = canvasHeight;
       
+      // Draw baseplate first (background)
+      ctx.drawImage(template.baseplate, 0, 0);
+      
       // Load event image
       const eventImage = await loadImage(event.EVENT_IMAGE_LARGE_URL);
       
-      // Calculate how to center event image to cover the full canvas
+      // Calculate event image size (2/3 of template width, ~650px)
+      const targetWidth = Math.min(canvasWidth * (2/3), 650);
       const eventAspect = eventImage.width / eventImage.height;
-      const canvasAspect = canvasWidth / canvasHeight;
       
-      let drawWidth, drawHeight, drawX, drawY;
+      const drawWidth = targetWidth;
+      const drawHeight = drawWidth / eventAspect;
       
-      // Cover the canvas (crop if needed to fill the entire area)
-      if (eventAspect > canvasAspect) {
-        // Event image is wider - fit by height, crop width
-        drawHeight = canvasHeight;
-        drawWidth = drawHeight * eventAspect;
-        drawX = (canvasWidth - drawWidth) / 2;
-        drawY = 0;
-      } else {
-        // Event image is taller - fit by width, crop height
-        drawWidth = canvasWidth;
-        drawHeight = drawWidth / eventAspect;
-        drawX = 0;
-        drawY = (canvasHeight - drawHeight) / 2;
-      }
-      
-      // Draw event image (centered, covering full canvas)
-      ctx.drawImage(eventImage, drawX, drawY, drawWidth, drawHeight);
-      
-      // Draw baseplate on top
-      ctx.drawImage(template.baseplate, 0, 0);
+      // Center the event image
+      const drawX = (canvasWidth - drawWidth) / 2;
+      const drawY = (canvasHeight - drawHeight) / 2;
       
       // Draw overlays
       for (const overlay of template.overlays) {
         ctx.drawImage(overlay.image, overlay.x, overlay.y, overlay.width, overlay.height);
       }
+      
+      // Draw event image on top (centered, ~2/3 width)
+      ctx.drawImage(eventImage, drawX, drawY, drawWidth, drawHeight);
       
       // Draw text
       const { textConfig } = template;
