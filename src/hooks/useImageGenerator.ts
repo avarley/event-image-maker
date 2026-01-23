@@ -44,8 +44,8 @@ export const useImageGenerator = () => {
       // Load event image
       const eventImage = await loadImage(event.EVENT_IMAGE_LARGE_URL);
       
-      // Calculate event image size (2/3 of template width, ~650px)
-      const targetWidth = Math.min(canvasWidth * (2/3), 650);
+      // Calculate event image size (wider, ~800px)
+      const targetWidth = Math.min(canvasWidth * 0.8, 800);
       const eventAspect = eventImage.width / eventImage.height;
       
       const drawWidth = targetWidth;
@@ -63,9 +63,9 @@ export const useImageGenerator = () => {
       // Draw event image on top (centered, ~2/3 width)
       ctx.drawImage(eventImage, drawX, drawY, drawWidth, drawHeight);
       
-      // Draw text
+      // Draw text (bold)
       const { textConfig } = template;
-      ctx.font = `${textConfig.fontSize}px ${textConfig.fontFamily}`;
+      ctx.font = `bold ${textConfig.fontSize}px ${textConfig.fontFamily}`;
       ctx.fillStyle = textConfig.color;
       ctx.textAlign = textConfig.textAlign;
       ctx.textBaseline = 'top';
