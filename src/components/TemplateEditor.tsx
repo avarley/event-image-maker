@@ -94,7 +94,21 @@ export const TemplateEditor = ({
 
   const handleResetToDefaults = useCallback(() => {
     if (!template) return;
-    onUpdateTemplate(template.id, { textConfig: DEFAULT_TEXT_CONFIG });
+    
+    if (template.baseplateDataUrl) {
+      const img = new Image();
+      img.onload = () => {
+        onUpdateTemplate(template.id, {
+          textConfig: {
+            ...DEFAULT_TEXT_CONFIG,
+            x: Math.floor(img.width / 2),
+          },
+        });
+      };
+      img.src = template.baseplateDataUrl;
+    } else {
+      onUpdateTemplate(template.id, { textConfig: DEFAULT_TEXT_CONFIG });
+    }
   }, [template, onUpdateTemplate]);
 
   if (!template) {
