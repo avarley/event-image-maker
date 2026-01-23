@@ -25,12 +25,12 @@ export const useImageGenerator = () => {
       
       switch (dateFormat) {
         case 'short':
-          return format(date, 'MMM d');
+          return format(date, 'd MMM'); // 15 Jan
         case 'full':
-          return format(date, 'EEEE, MMMM d, yyyy');
+          return format(date, 'EEEE, d MMMM yyyy'); // Friday, 15 January 2025
         case 'long':
         default:
-          return format(date, 'MMMM d, yyyy');
+          return format(date, 'd MMMM yyyy'); // 15 January 2025
       }
     } catch {
       return dateStr;
@@ -112,9 +112,9 @@ export const useImageGenerator = () => {
       const drawWidth = targetWidth;
       const drawHeight = drawWidth / eventAspect;
       
-      // Center the event image
+      // Center the event image horizontally, move up 100px from center
       const drawX = (canvasWidth - drawWidth) / 2;
-      const drawY = (canvasHeight - drawHeight) / 2;
+      const drawY = (canvasHeight - drawHeight) / 2 - 100;
       
       // Draw overlays BELOW event image
       const belowOverlays = template.overlays.filter(o => o.layer === 'below');
