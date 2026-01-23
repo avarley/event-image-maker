@@ -4,12 +4,12 @@ import { SavedTemplate, TextConfig } from '@/types/imageGenerator';
 const STORAGE_KEY = 'bulk-image-generator-templates';
 
 const DEFAULT_TEXT_CONFIG: TextConfig = {
-  fontFamily: 'Arial',
+  fontFamily: 'Roboto',
   fontSize: 56,
   color: '#ffffff',
-  x: 400,
-  y: 50,
-  maxWidth: 500,
+  x: 540,
+  y: 940,
+  maxWidth: 550,
   textAlign: 'center',
 };
 
