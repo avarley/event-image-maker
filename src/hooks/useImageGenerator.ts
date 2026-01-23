@@ -57,40 +57,49 @@ export const useImageGenerator = () => {
       const drawX = (canvasWidth - drawWidth) / 2;
       const drawY = (canvasHeight - drawHeight) / 2;
       
-      // Draw overlays
-      for (const overlay of template.overlays) {
+      // Draw overlays BELOW event image
+      const belowOverlays = template.overlays.filter(o => o.layer === 'below');
+      for (const overlay of belowOverlays) {
         ctx.drawImage(overlay.image, overlay.x, overlay.y, overlay.width, overlay.height);
       }
       
-      // Draw event image on top (centered, ~2/3 width)
+      // Draw event image (middle layer)
       ctx.drawImage(eventImage, drawX, drawY, drawWidth, drawHeight);
       
-      // Draw text (bold)
-      const { textConfig } = template;
-      ctx.font = `bold ${textConfig.fontSize}px ${textConfig.fontFamily}`;
-      ctx.fillStyle = textConfig.color;
-      ctx.textAlign = textConfig.textAlign;
-      ctx.textBaseline = 'top';
-      
-      // Word wrap text if needed
-      const words = event.EVENT_NAME.split(' ');
-      let line = '';
-      let y = textConfig.y;
-      const lineHeight = textConfig.fontSize * 1.2;
-      
-      for (let i = 0; i < words.length; i++) {
-        const testLine = line + words[i] + ' ';
-        const metrics = ctx.measureText(testLine);
-        
-        if (metrics.width > textConfig.maxWidth && i > 0) {
-          ctx.fillText(line.trim(), textConfig.x, y);
-          line = words[i] + ' ';
-          y += lineHeight;
-        } else {
-          line = testLine;
-        }
+      // Draw overlays ABOVE event image
+      const aboveOverlays = template.overlays.filter(o => o.layer === 'above');
+      for (const overlay of aboveOverlays) {
+        ctx.drawImage(overlay.image, overlay.x, overlay.y, overlay.width, overlay.height);
       }
-      ctx.fillText(line.trim(), textConfig.x, y);
+      
+      // Draw text (if enabled)
+      const { textConfig } = template;
+      if (template.textEnabled !== false) {
+        ctx.font = `bold ${textConfig.fontSize}px ${textConfig.fontFamily}`;
+        ctx.fillStyle = textConfig.color;
+        ctx.textAlign = textConfig.textAlign;
+        ctx.textBaseline = 'top';
+        
+        // Word wrap text if needed
+        const words = event.EVENT_NAME.split(' ');
+        let line = '';
+        let y = textConfig.y;
+        const lineHeight = textConfig.fontSize * 1.2;
+        
+        for (let i = 0; i < words.length; i++) {
+          const testLine = line + words[i] + ' ';
+          const metrics = ctx.measureText(testLine);
+          
+          if (metrics.width > textConfig.maxWidth && i > 0) {
+            ctx.fillText(line.trim(), textConfig.x, y);
+            line = words[i] + ' ';
+            y += lineHeight;
+          } else {
+            line = testLine;
+          }
+        }
+        ctx.fillText(line.trim(), textConfig.x, y);
+      }
       
       return {
         eventId: event.EVENT_ID,

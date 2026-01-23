@@ -38,12 +38,24 @@ export interface OverlayConfig {
   y: number;
   width: number;
   height: number;
+  layer: 'below' | 'above'; // below = under event image, above = on top
+}
+
+export interface SavedOverlay {
+  id: string;
+  dataUrl: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  layer: 'below' | 'above';
 }
 
 export interface TemplateConfig {
   baseplate: HTMLImageElement | null;
   baseplateUrl: string;
   textConfig: TextConfig;
+  textEnabled: boolean;
   overlays: OverlayConfig[];
 }
 
@@ -52,6 +64,8 @@ export interface SavedTemplate {
   name: string;
   baseplateDataUrl: string;
   textConfig: TextConfig;
+  textEnabled: boolean;
+  overlays: SavedOverlay[];
   createdAt: number;
   updatedAt: number;
 }

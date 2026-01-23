@@ -15,6 +15,7 @@ import {
   TemplateConfig,
   GeneratedImage,
   SavedTemplate,
+  OverlayConfig,
 } from '@/types/imageGenerator';
 
 const DEFAULT_FEED_URL = 'https://growthbook-tixel.s3.ap-southeast-2.amazonaws.com/tixel-tuesdays/top-events.json';
@@ -130,12 +131,35 @@ const Index = () => {
 
     return new Promise((resolve) => {
       const img = new Image();
-      img.onload = () => {
+      img.onload = async () => {
+        // Load overlay images
+        const overlayConfigs = await Promise.all(
+          (savedTemplate.overlays || []).map(async (overlay) => {
+            return new Promise<OverlayConfig | null>((resolveOverlay) => {
+              const overlayImg = new Image();
+              overlayImg.onload = () => {
+                resolveOverlay({
+                  id: overlay.id,
+                  image: overlayImg,
+                  x: overlay.x,
+                  y: overlay.y,
+                  width: overlay.width,
+                  height: overlay.height,
+                  layer: overlay.layer,
+                });
+              };
+              overlayImg.onerror = () => resolveOverlay(null);
+              overlayImg.src = overlay.dataUrl;
+            });
+          })
+        );
+
         resolve({
           baseplate: img,
           baseplateUrl: savedTemplate.baseplateDataUrl,
           textConfig: savedTemplate.textConfig,
-          overlays: [],
+          textEnabled: savedTemplate.textEnabled ?? true,
+          overlays: overlayConfigs.filter((o): o is OverlayConfig => o !== null),
         });
       };
       img.onerror = () => resolve(null);
