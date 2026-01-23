@@ -145,7 +145,7 @@ export const TemplateCanvas = ({
           }}
         >
           <span
-            className="break-words"
+            className="break-words font-bold"
             style={{
               fontFamily: textConfig.fontFamily,
               fontSize: textConfig.fontSize * scale,
