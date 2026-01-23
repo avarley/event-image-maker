@@ -4,6 +4,7 @@ import { TextConfig } from '@/types/imageGenerator';
 interface TemplateCanvasProps {
   baseplateUrl: string;
   textConfig: TextConfig;
+  textEnabled: boolean;
   sampleText: string;
   onTextConfigChange: (config: TextConfig) => void;
 }
@@ -11,6 +12,7 @@ interface TemplateCanvasProps {
 export const TemplateCanvas = ({
   baseplateUrl,
   textConfig,
+  textEnabled,
   sampleText,
   onTextConfigChange,
 }: TemplateCanvasProps) => {
@@ -125,44 +127,46 @@ export const TemplateCanvas = ({
         draggable={false}
       />
 
-      {/* Draggable text element */}
-      <div
-        className={`absolute transition-shadow ${
-          isDragging ? 'ring-2 ring-primary ring-offset-2' : ''
-        }`}
-        style={{
-          left: (textConfig.x - getTextAlignOffset()) * scale,
-          top: textConfig.y * scale,
-          width: textConfig.maxWidth * scale,
-          cursor: 'grab',
-        }}
-      >
-        {/* Text bounding box */}
+      {/* Draggable text element - only show if text is enabled */}
+      {textEnabled && (
         <div
-          className="border-2 border-dashed border-green-500 bg-green-500/10 px-2 py-1 hover:bg-green-500/20"
+          className={`absolute transition-shadow ${
+            isDragging ? 'ring-2 ring-primary ring-offset-2' : ''
+          }`}
           style={{
-            textAlign: textConfig.textAlign,
+            left: (textConfig.x - getTextAlignOffset()) * scale,
+            top: textConfig.y * scale,
+            width: textConfig.maxWidth * scale,
+            cursor: 'grab',
           }}
         >
-          <span
-            className="break-words font-bold"
+          {/* Text bounding box */}
+          <div
+            className="border-2 border-dashed border-green-500 bg-green-500/10 px-2 py-1 hover:bg-green-500/20"
             style={{
-              fontFamily: textConfig.fontFamily,
-              fontSize: textConfig.fontSize * scale,
-              color: textConfig.color,
-              textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
+              textAlign: textConfig.textAlign,
             }}
           >
-            {sampleText || 'Sample Event Name'}
+            <span
+              className="break-words font-bold"
+              style={{
+                fontFamily: textConfig.fontFamily,
+                fontSize: textConfig.fontSize * scale,
+                color: textConfig.color,
+                textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
+              }}
+            >
+              {sampleText || 'Sample Event Name'}
+            </span>
+          </div>
+          <span className="absolute -top-6 left-0 text-xs bg-green-500 text-white px-1 rounded">
+            Text (drag to move)
           </span>
         </div>
-        <span className="absolute -top-6 left-0 text-xs bg-green-500 text-white px-1 rounded">
-          Text (drag to move)
-        </span>
-      </div>
+      )}
 
       {/* Crosshair guides when dragging */}
-      {isDragging && (
+      {isDragging && textEnabled && (
         <>
           <div
             className="absolute h-full w-px bg-primary/50 pointer-events-none"

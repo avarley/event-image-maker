@@ -44,6 +44,8 @@ export const useTemplateStorage = () => {
       name,
       baseplateDataUrl: '',
       textConfig: DEFAULT_TEXT_CONFIG,
+      textEnabled: true,
+      overlays: [],
       createdAt: Date.now(),
       updatedAt: Date.now(),
     };
