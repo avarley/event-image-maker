@@ -19,7 +19,8 @@ export const useImageGenerator = () => {
 
   const generateImage = useCallback(async (
     event: EventData,
-    template: TemplateConfig
+    template: TemplateConfig,
+    customImageUrl?: string
   ): Promise<GeneratedImage | null> => {
     if (!template.baseplate) {
       console.error('Template not configured properly');
@@ -41,8 +42,9 @@ export const useImageGenerator = () => {
       // Draw baseplate first (background)
       ctx.drawImage(template.baseplate, 0, 0);
       
-      // Load event image
-      const eventImage = await loadImage(event.EVENT_IMAGE_LARGE_URL);
+      // Load event image (use custom URL if provided)
+      const imageUrl = customImageUrl || event.EVENT_IMAGE_LARGE_URL;
+      const eventImage = await loadImage(imageUrl);
       
       // Calculate event image size (wider, ~800px)
       const targetWidth = Math.min(canvasWidth * 0.8, 800);
