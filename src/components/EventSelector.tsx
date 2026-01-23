@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -6,6 +6,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Loader2, RefreshCw, List, Upload, X } from 'lucide-react';
 import { EventData } from '@/types/imageGenerator';
+import { ImageCropModal } from './ImageCropModal';
 
 interface EventSelectorProps {
   events: EventData[];
@@ -36,6 +37,11 @@ export const EventSelector = ({
 }: EventSelectorProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const currentEventIdRef = useRef<string | null>(null);
+  
+  // Crop modal state
+  const [cropModalOpen, setCropModalOpen] = useState(false);
+  const [pendingCropImage, setPendingCropImage] = useState<string | null>(null);
+  const [pendingEventId, setPendingEventId] = useState<string | null>(null);
 
   const handleUploadClick = (eventId: string) => {
     currentEventIdRef.current = eventId;
@@ -50,13 +56,30 @@ export const EventSelector = ({
     reader.onload = (event) => {
       const dataUrl = event.target?.result as string;
       if (currentEventIdRef.current) {
-        onImageOverride(currentEventIdRef.current, dataUrl);
+        // Open crop modal instead of directly applying
+        setPendingCropImage(dataUrl);
+        setPendingEventId(currentEventIdRef.current);
+        setCropModalOpen(true);
       }
     };
     reader.readAsDataURL(file);
     
     // Reset input so same file can be selected again
     e.target.value = '';
+  };
+
+  const handleCropComplete = (croppedDataUrl: string) => {
+    if (pendingEventId) {
+      onImageOverride(pendingEventId, croppedDataUrl);
+    }
+    setPendingCropImage(null);
+    setPendingEventId(null);
+  };
+
+  const handleCropClose = () => {
+    setCropModalOpen(false);
+    setPendingCropImage(null);
+    setPendingEventId(null);
   };
 
   return (
@@ -163,6 +186,14 @@ export const EventSelector = ({
             </ScrollArea>
           </>
         )}
+
+        {/* Crop Modal */}
+        <ImageCropModal
+          isOpen={cropModalOpen}
+          onClose={handleCropClose}
+          imageDataUrl={pendingCropImage || ''}
+          onCropComplete={handleCropComplete}
+        />
       </CardContent>
     </Card>
   );
