@@ -1,9 +1,8 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
-import { TextConfig, TransparentRegion } from '@/types/imageGenerator';
+import { TextConfig } from '@/types/imageGenerator';
 
 interface TemplateCanvasProps {
   baseplateUrl: string;
-  transparentRegion: TransparentRegion | null;
   textConfig: TextConfig;
   sampleText: string;
   onTextConfigChange: (config: TextConfig) => void;
@@ -11,7 +10,6 @@ interface TemplateCanvasProps {
 
 export const TemplateCanvas = ({
   baseplateUrl,
-  transparentRegion,
   textConfig,
   sampleText,
   onTextConfigChange,
@@ -126,23 +124,6 @@ export const TemplateCanvas = ({
         className="absolute inset-0 w-full h-full pointer-events-none"
         draggable={false}
       />
-
-      {/* Transparent region indicator */}
-      {transparentRegion && (
-        <div
-          className="absolute border-2 border-dashed border-blue-500 bg-blue-500/10 pointer-events-none"
-          style={{
-            left: transparentRegion.x * scale,
-            top: transparentRegion.y * scale,
-            width: transparentRegion.width * scale,
-            height: transparentRegion.height * scale,
-          }}
-        >
-          <span className="absolute -top-6 left-0 text-xs bg-blue-500 text-white px-1 rounded">
-            Image Area
-          </span>
-        </div>
-      )}
 
       {/* Draggable text element */}
       <div

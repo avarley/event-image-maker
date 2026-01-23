@@ -21,7 +21,7 @@ export const useImageGenerator = () => {
     event: EventData,
     template: TemplateConfig
   ): Promise<GeneratedImage | null> => {
-    if (!template.baseplate || !template.transparentRegion) {
+    if (!template.baseplate) {
       console.error('Template not configured properly');
       return null;
     }
@@ -33,41 +33,37 @@ export const useImageGenerator = () => {
       if (!ctx) return null;
       
       // Set canvas size to match baseplate
-      canvas.width = template.baseplate.width;
-      canvas.height = template.baseplate.height;
+      const canvasWidth = template.baseplate.width;
+      const canvasHeight = template.baseplate.height;
+      canvas.width = canvasWidth;
+      canvas.height = canvasHeight;
       
       // Load event image
       const eventImage = await loadImage(event.EVENT_IMAGE_LARGE_URL);
       
-      // Calculate how to fit event image into transparent region
-      const region = template.transparentRegion;
+      // Calculate how to center event image to cover the full canvas
       const eventAspect = eventImage.width / eventImage.height;
-      const regionAspect = region.width / region.height;
+      const canvasAspect = canvasWidth / canvasHeight;
       
       let drawWidth, drawHeight, drawX, drawY;
       
-      // Cover the region (crop if needed)
-      if (eventAspect > regionAspect) {
-        // Event image is wider - fit by height
-        drawHeight = region.height;
+      // Cover the canvas (crop if needed to fill the entire area)
+      if (eventAspect > canvasAspect) {
+        // Event image is wider - fit by height, crop width
+        drawHeight = canvasHeight;
         drawWidth = drawHeight * eventAspect;
-        drawX = region.x - (drawWidth - region.width) / 2;
-        drawY = region.y;
+        drawX = (canvasWidth - drawWidth) / 2;
+        drawY = 0;
       } else {
-        // Event image is taller - fit by width
-        drawWidth = region.width;
+        // Event image is taller - fit by width, crop height
+        drawWidth = canvasWidth;
         drawHeight = drawWidth / eventAspect;
-        drawX = region.x;
-        drawY = region.y - (drawHeight - region.height) / 2;
+        drawX = 0;
+        drawY = (canvasHeight - drawHeight) / 2;
       }
       
-      // Draw event image (behind baseplate)
-      ctx.save();
-      ctx.beginPath();
-      ctx.rect(region.x, region.y, region.width, region.height);
-      ctx.clip();
+      // Draw event image (centered, covering full canvas)
       ctx.drawImage(eventImage, drawX, drawY, drawWidth, drawHeight);
-      ctx.restore();
       
       // Draw baseplate on top
       ctx.drawImage(template.baseplate, 0, 0);

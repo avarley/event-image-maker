@@ -5,10 +5,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { SavedTemplate, TextConfig, TransparentRegion } from '@/types/imageGenerator';
+import { SavedTemplate, TextConfig } from '@/types/imageGenerator';
 import { TemplateCanvas } from './TemplateCanvas';
-import { useTransparencyDetection } from '@/hooks/useTransparencyDetection';
-import { toast } from 'sonner';
 
 interface TemplateEditorProps {
   template: SavedTemplate | null;
@@ -34,8 +32,6 @@ export const TemplateEditor = ({
   onUpdateTemplate,
   sampleEventName = 'Sample Event Name',
 }: TemplateEditorProps) => {
-  const { detectTransparentRegion } = useTransparencyDetection();
-
   const handleFileChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       if (!template) return;
@@ -47,29 +43,21 @@ export const TemplateEditor = ({
         const img = new Image();
         img.onload = () => {
           const dataUrl = event.target?.result as string;
-          const region = detectTransparentRegion(img);
           
           onUpdateTemplate(template.id, {
             baseplateDataUrl: dataUrl,
-            transparentRegion: region,
             textConfig: {
               ...template.textConfig,
               x: Math.floor(img.width / 2),
               maxWidth: img.width - 100,
             },
           });
-
-          if (region) {
-            toast.success('Transparent region detected!');
-          } else {
-            toast.warning('No transparent region found in the template');
-          }
         };
         img.src = event.target?.result as string;
       };
       reader.readAsDataURL(file);
     },
-    [template, detectTransparentRegion, onUpdateTemplate]
+    [template, onUpdateTemplate]
   );
 
   const handleTextConfigChange = useCallback(
@@ -128,7 +116,7 @@ export const TemplateEditor = ({
         <CardContent className="p-4">
           <div className="mb-2 flex items-center justify-between">
             <span className="text-sm font-medium">Live Preview</span>
-            {template.transparentRegion && (
+            {template.baseplateDataUrl && (
               <span className="text-xs text-muted-foreground">
                 Drag the green text box to reposition
               </span>
@@ -136,7 +124,6 @@ export const TemplateEditor = ({
           </div>
           <TemplateCanvas
             baseplateUrl={template.baseplateDataUrl}
-            transparentRegion={template.transparentRegion}
             textConfig={template.textConfig}
             sampleText={sampleEventName}
             onTextConfigChange={handleTextConfigChange}
