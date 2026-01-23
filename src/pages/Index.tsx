@@ -34,6 +34,7 @@ const Index = () => {
   const [feedUrl, setFeedUrl] = useState(DEFAULT_FEED_URL);
   const [events, setEvents] = useState<EventData[]>([]);
   const [selectedEventIds, setSelectedEventIds] = useState<Set<string>>(new Set());
+  const [imageOverrides, setImageOverrides] = useState<Record<string, string>>({});
   const [selectedTemplateIds, setSelectedTemplateIds] = useState<Set<string>>(new Set());
   const [isLoadingEvents, setIsLoadingEvents] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -90,6 +91,17 @@ const Index = () => {
 
   const deselectAllEvents = useCallback(() => {
     setSelectedEventIds(new Set());
+  }, []);
+
+  const handleImageOverride = useCallback((eventId: string, dataUrl: string | null) => {
+    setImageOverrides((prev) => {
+      if (dataUrl === null) {
+        const next = { ...prev };
+        delete next[eventId];
+        return next;
+      }
+      return { ...prev, [eventId]: dataUrl };
+    });
   }, []);
 
   const toggleTemplateForGeneration = useCallback((templateId: string) => {
@@ -154,7 +166,8 @@ const Index = () => {
       if (!templateConfig) continue;
 
       for (const event of selectedEvents) {
-        const result = await generateImage(event, templateConfig);
+        const customImageUrl = imageOverrides[event.EVENT_ID];
+        const result = await generateImage(event, templateConfig, customImageUrl);
         if (result) {
           results.push({
             ...result,
@@ -168,7 +181,7 @@ const Index = () => {
 
     setIsGenerating(false);
     toast.success(`Generated ${results.length} images`);
-  }, [selectedTemplateIds, selectedEventIds, events, templates, createTemplateConfig, generateImage]);
+  }, [selectedTemplateIds, selectedEventIds, events, templates, createTemplateConfig, generateImage, imageOverrides]);
 
   const handleDownload = useCallback((image: GeneratedImage) => {
     const link = document.createElement('a');
@@ -229,11 +242,13 @@ const Index = () => {
             selectedEventIds={selectedEventIds}
             isLoading={isLoadingEvents}
             feedUrl={feedUrl}
+            imageOverrides={imageOverrides}
             onFeedUrlChange={setFeedUrl}
             onFetchEvents={fetchEvents}
             onToggleEvent={toggleEvent}
             onSelectAll={selectAllEvents}
             onDeselectAll={deselectAllEvents}
+            onImageOverride={handleImageOverride}
           />
         </TabsContent>
 
