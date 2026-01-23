@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { Upload, Image as ImageIcon } from 'lucide-react';
+import { Upload, Image as ImageIcon, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -13,6 +13,16 @@ interface TemplateEditorProps {
   onUpdateTemplate: (id: string, updates: Partial<SavedTemplate>) => void;
   sampleEventName?: string;
 }
+
+const DEFAULT_TEXT_CONFIG: TextConfig = {
+  fontFamily: 'Roboto',
+  fontSize: 56,
+  color: '#ffffff',
+  x: 540,
+  y: 940,
+  maxWidth: 550,
+  textAlign: 'center',
+};
 
 const FONT_FAMILIES = [
   'Roboto',
@@ -82,6 +92,11 @@ export const TemplateEditor = ({
     [template, onUpdateTemplate]
   );
 
+  const handleResetToDefaults = useCallback(() => {
+    if (!template) return;
+    onUpdateTemplate(template.id, { textConfig: DEFAULT_TEXT_CONFIG });
+  }, [template, onUpdateTemplate]);
+
   if (!template) {
     return (
       <div className="flex-1 flex items-center justify-center bg-muted/20">
@@ -136,7 +151,13 @@ export const TemplateEditor = ({
       {template.baseplateDataUrl && (
         <Card>
           <CardContent className="p-4 space-y-4">
-            <span className="text-sm font-medium">Text Settings</span>
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">Text Settings</span>
+              <Button variant="outline" size="sm" onClick={handleResetToDefaults}>
+                <RotateCcw className="h-4 w-4 mr-1" />
+                Reset
+              </Button>
+            </div>
             
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="space-y-2">
