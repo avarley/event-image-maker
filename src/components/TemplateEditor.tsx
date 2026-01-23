@@ -40,10 +40,10 @@ const FONT_FAMILIES = [
   'Lucida Console',
 ];
 
-// Sample data for preview
+// Sample data for preview (Australian date format)
 const SAMPLE_EVENT = {
   name: 'Sample Event Name',
-  date: 'January 15, 2025',
+  date: '15 January 2025',
   location: 'Austin, TX',
   venue: 'Main Stage Arena',
 };
@@ -445,9 +445,9 @@ export const TemplateEditor = ({
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="short">Jan 15</SelectItem>
-                            <SelectItem value="long">January 15, 2025</SelectItem>
-                            <SelectItem value="full">Friday, January 15, 2025</SelectItem>
+                            <SelectItem value="short">15 Jan</SelectItem>
+                            <SelectItem value="long">15 January 2025</SelectItem>
+                            <SelectItem value="full">Friday, 15 January 2025</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
