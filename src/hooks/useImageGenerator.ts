@@ -60,11 +60,17 @@ export const useImageGenerator = () => {
     if (fields.showDate && event.STARTS_AT) {
       lines.push(formatDate(event.STARTS_AT, fields.dateFormat));
     }
-    if (fields.showVenue && event.VENUE_NAME) {
-      lines.push(event.VENUE_NAME);
-    }
-    if (fields.showLocation && event.CITY_NAME) {
-      lines.push(formatLocation(event, fields.locationFormat));
+    
+    // Concatenate venue and location on the same line
+    const venuePart = fields.showVenue && event.VENUE_NAME ? event.VENUE_NAME : '';
+    const locationPart = fields.showLocation && event.CITY_NAME ? formatLocation(event, fields.locationFormat) : '';
+    
+    if (venuePart && locationPart) {
+      lines.push(`${venuePart}, ${locationPart}`);
+    } else if (venuePart) {
+      lines.push(venuePart);
+    } else if (locationPart) {
+      lines.push(locationPart);
     }
     
     return lines;
