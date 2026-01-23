@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
-import { EventData, TemplateConfig, GeneratedImage } from '@/types/imageGenerator';
+import { EventData, TemplateConfig, GeneratedImage, TextFieldConfig, DEFAULT_TEXT_FIELDS } from '@/types/imageGenerator';
+import { format } from 'date-fns';
 
 export const useImageGenerator = () => {
   const loadImage = useCallback((src: string): Promise<HTMLImageElement> => {
@@ -16,6 +17,58 @@ export const useImageGenerator = () => {
       }
     });
   }, []);
+
+  const formatDate = useCallback((dateStr: string, dateFormat: TextFieldConfig['dateFormat']): string => {
+    try {
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return dateStr;
+      
+      switch (dateFormat) {
+        case 'short':
+          return format(date, 'MMM d');
+        case 'full':
+          return format(date, 'EEEE, MMMM d, yyyy');
+        case 'long':
+        default:
+          return format(date, 'MMMM d, yyyy');
+      }
+    } catch {
+      return dateStr;
+    }
+  }, []);
+
+  const formatLocation = useCallback((event: EventData, locationFormat: TextFieldConfig['locationFormat']): string => {
+    switch (locationFormat) {
+      case 'city':
+        return event.CITY_NAME;
+      case 'city-country':
+        return `${event.CITY_NAME}, ${event.COUNTRY_NAME}`;
+      case 'city-state':
+      default:
+        return event.STATE_CODE 
+          ? `${event.CITY_NAME}, ${event.STATE_CODE}`
+          : `${event.CITY_NAME}, ${event.COUNTRY_NAME}`;
+    }
+  }, []);
+
+  const buildTextLines = useCallback((event: EventData, fields: TextFieldConfig): string[] => {
+    const lines: string[] = [];
+    
+    if (fields.showEventName) {
+      lines.push(event.EVENT_NAME);
+    }
+    if (fields.showDate && event.STARTS_AT) {
+      lines.push(formatDate(event.STARTS_AT, fields.dateFormat));
+    }
+    if (fields.showVenue && event.VENUE_NAME) {
+      lines.push(event.VENUE_NAME);
+    }
+    if (fields.showLocation && event.CITY_NAME) {
+      lines.push(formatLocation(event, fields.locationFormat));
+    }
+    
+    return lines;
+  }, [formatDate, formatLocation]);
 
   const generateImage = useCallback(async (
     event: EventData,
@@ -75,30 +128,37 @@ export const useImageGenerator = () => {
       // Draw text (if enabled)
       const { textConfig } = template;
       if (template.textEnabled !== false) {
+        const fields = textConfig.fields || DEFAULT_TEXT_FIELDS;
+        const textLines = buildTextLines(event, fields);
+        
         ctx.font = `bold ${textConfig.fontSize}px ${textConfig.fontFamily}`;
         ctx.fillStyle = textConfig.color;
         ctx.textAlign = textConfig.textAlign;
         ctx.textBaseline = 'top';
         
-        // Word wrap text if needed
-        const words = event.EVENT_NAME.split(' ');
-        let line = '';
-        let y = textConfig.y;
         const lineHeight = textConfig.fontSize * 1.2;
+        let currentY = textConfig.y;
         
-        for (let i = 0; i < words.length; i++) {
-          const testLine = line + words[i] + ' ';
-          const metrics = ctx.measureText(testLine);
+        // Draw each text line with word wrapping
+        for (const lineText of textLines) {
+          const words = lineText.split(' ');
+          let line = '';
           
-          if (metrics.width > textConfig.maxWidth && i > 0) {
-            ctx.fillText(line.trim(), textConfig.x, y);
-            line = words[i] + ' ';
-            y += lineHeight;
-          } else {
-            line = testLine;
+          for (let i = 0; i < words.length; i++) {
+            const testLine = line + words[i] + ' ';
+            const metrics = ctx.measureText(testLine);
+            
+            if (metrics.width > textConfig.maxWidth && i > 0) {
+              ctx.fillText(line.trim(), textConfig.x, currentY);
+              line = words[i] + ' ';
+              currentY += lineHeight;
+            } else {
+              line = testLine;
+            }
           }
+          ctx.fillText(line.trim(), textConfig.x, currentY);
+          currentY += lineHeight;
         }
-        ctx.fillText(line.trim(), textConfig.x, y);
       }
       
       return {
@@ -112,7 +172,7 @@ export const useImageGenerator = () => {
       console.error('Failed to generate image for event:', event.EVENT_NAME, error);
       return null;
     }
-  }, [loadImage]);
+  }, [loadImage, buildTextLines]);
 
   return { generateImage, loadImage };
 };

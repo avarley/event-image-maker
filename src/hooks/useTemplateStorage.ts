@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { SavedTemplate, TextConfig } from '@/types/imageGenerator';
+import { SavedTemplate, TextConfig, DEFAULT_TEXT_FIELDS } from '@/types/imageGenerator';
 
 const STORAGE_KEY = 'bulk-image-generator-templates';
 
@@ -11,6 +11,7 @@ const DEFAULT_TEXT_CONFIG: TextConfig = {
   y: 940,
   maxWidth: 550,
   textAlign: 'center',
+  fields: DEFAULT_TEXT_FIELDS,
 };
 
 export const useTemplateStorage = () => {
@@ -23,9 +24,17 @@ export const useTemplateStorage = () => {
     if (stored) {
       try {
         const parsed = JSON.parse(stored) as SavedTemplate[];
-        setTemplates(parsed);
-        if (parsed.length > 0 && !activeTemplateId) {
-          setActiveTemplateId(parsed[0].id);
+        // Migrate old templates that don't have fields property
+        const migrated = parsed.map((t) => ({
+          ...t,
+          textConfig: {
+            ...t.textConfig,
+            fields: t.textConfig.fields || DEFAULT_TEXT_FIELDS,
+          },
+        }));
+        setTemplates(migrated);
+        if (migrated.length > 0 && !activeTemplateId) {
+          setActiveTemplateId(migrated[0].id);
         }
       } catch (e) {
         console.error('Failed to parse stored templates:', e);

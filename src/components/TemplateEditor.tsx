@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { SavedTemplate, TextConfig, SavedOverlay } from '@/types/imageGenerator';
+import { SavedTemplate, TextConfig, SavedOverlay, TextFieldConfig, DEFAULT_TEXT_FIELDS } from '@/types/imageGenerator';
 import { TemplateCanvas } from './TemplateCanvas';
 
 interface TemplateEditorProps {
@@ -23,6 +23,7 @@ const DEFAULT_TEXT_CONFIG: TextConfig = {
   y: 940,
   maxWidth: 550,
   textAlign: 'center',
+  fields: DEFAULT_TEXT_FIELDS,
 };
 
 const FONT_FAMILIES = [
@@ -38,6 +39,14 @@ const FONT_FAMILIES = [
   'Arial Black',
   'Lucida Console',
 ];
+
+// Sample data for preview
+const SAMPLE_EVENT = {
+  name: 'Sample Event Name',
+  date: 'January 15, 2025',
+  location: 'Austin, TX',
+  venue: 'Main Stage Arena',
+};
 
 export const TemplateEditor = ({
   template,
@@ -87,6 +96,23 @@ export const TemplateEditor = ({
         textConfig: {
           ...template.textConfig,
           [key]: value,
+        },
+      });
+    },
+    [template, onUpdateTemplate]
+  );
+
+  const handleFieldToggle = useCallback(
+    (fieldKey: keyof TextFieldConfig, value: boolean | string) => {
+      if (!template) return;
+      const currentFields = template.textConfig.fields || DEFAULT_TEXT_FIELDS;
+      onUpdateTemplate(template.id, {
+        textConfig: {
+          ...template.textConfig,
+          fields: {
+            ...currentFields,
+            [fieldKey]: value,
+          },
         },
       });
     },
@@ -193,6 +219,20 @@ export const TemplateEditor = ({
     [template, onUpdateTemplate]
   );
 
+  // Build preview text based on enabled fields
+  const getPreviewText = useCallback(() => {
+    if (!template) return sampleEventName;
+    const fields = template.textConfig.fields || DEFAULT_TEXT_FIELDS;
+    const lines: string[] = [];
+    
+    if (fields.showEventName) lines.push(sampleEventName || SAMPLE_EVENT.name);
+    if (fields.showDate) lines.push(SAMPLE_EVENT.date);
+    if (fields.showVenue) lines.push(SAMPLE_EVENT.venue);
+    if (fields.showLocation) lines.push(SAMPLE_EVENT.location);
+    
+    return lines.join('\n') || 'No fields selected';
+  }, [template, sampleEventName]);
+
   if (!template) {
     return (
       <div className="flex-1 flex items-center justify-center bg-muted/20">
@@ -203,6 +243,8 @@ export const TemplateEditor = ({
       </div>
     );
   }
+
+  const textFields = template.textConfig.fields || DEFAULT_TEXT_FIELDS;
 
   return (
     <div className="flex-1 p-6 space-y-6 overflow-auto">
@@ -238,7 +280,7 @@ export const TemplateEditor = ({
             baseplateUrl={template.baseplateDataUrl}
             textConfig={template.textConfig}
             textEnabled={template.textEnabled ?? true}
-            sampleText={sampleEventName}
+            sampleText={getPreviewText()}
             overlays={template.overlays || []}
             onTextConfigChange={handleTextConfigChange}
             onOverlaysChange={handleOverlaysChange}
@@ -343,6 +385,85 @@ export const TemplateEditor = ({
             
             {(template.textEnabled ?? true) && (
               <>
+                {/* Text Fields Toggles */}
+                <div className="border rounded-lg p-4 space-y-3">
+                  <span className="text-sm font-medium">Display Fields</span>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        id="showEventName"
+                        checked={textFields.showEventName}
+                        onCheckedChange={(checked) => handleFieldToggle('showEventName', checked)}
+                      />
+                      <Label htmlFor="showEventName" className="text-sm">Event Name</Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        id="showDate"
+                        checked={textFields.showDate}
+                        onCheckedChange={(checked) => handleFieldToggle('showDate', checked)}
+                      />
+                      <Label htmlFor="showDate" className="text-sm">Date</Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        id="showVenue"
+                        checked={textFields.showVenue}
+                        onCheckedChange={(checked) => handleFieldToggle('showVenue', checked)}
+                      />
+                      <Label htmlFor="showVenue" className="text-sm">Venue</Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        id="showLocation"
+                        checked={textFields.showLocation}
+                        onCheckedChange={(checked) => handleFieldToggle('showLocation', checked)}
+                      />
+                      <Label htmlFor="showLocation" className="text-sm">Location</Label>
+                    </div>
+                  </div>
+
+                  {/* Format options */}
+                  <div className="grid grid-cols-2 gap-4 pt-2">
+                    {textFields.showDate && (
+                      <div className="space-y-2">
+                        <Label htmlFor="dateFormat" className="text-sm">Date Format</Label>
+                        <Select
+                          value={textFields.dateFormat}
+                          onValueChange={(value) => handleFieldToggle('dateFormat', value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="short">Jan 15</SelectItem>
+                            <SelectItem value="long">January 15, 2025</SelectItem>
+                            <SelectItem value="full">Friday, January 15, 2025</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                    {textFields.showLocation && (
+                      <div className="space-y-2">
+                        <Label htmlFor="locationFormat" className="text-sm">Location Format</Label>
+                        <Select
+                          value={textFields.locationFormat}
+                          onValueChange={(value) => handleFieldToggle('locationFormat', value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="city">City only</SelectItem>
+                            <SelectItem value="city-state">City, State</SelectItem>
+                            <SelectItem value="city-country">City, Country</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="fontFamily">Font Family</Label>
