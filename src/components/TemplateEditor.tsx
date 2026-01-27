@@ -53,6 +53,8 @@ export const TemplateEditor = ({
   onUpdateTemplate,
   sampleEventName = 'Sample Event Name',
 }: TemplateEditorProps) => {
+  const [showSafeZone, setShowSafeZone] = useState(false);
+
   const handleFileChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       if (!template) return;
@@ -254,7 +256,6 @@ export const TemplateEditor = ({
   }
 
   const textFields = template.textConfig.fields || DEFAULT_TEXT_FIELDS;
-  const [showSafeZone, setShowSafeZone] = useState(false);
 
   return (
     <div className="flex-1 p-6 space-y-6 overflow-auto">
