@@ -33,28 +33,29 @@ export const useImageGenerator = () => {
       const date = new Date(dateStr);
       if (isNaN(date.getTime())) return dateStr;
       
+      const day = date.getDate();
+      const ordinalSuffix = fields.dateOrdinal ? getOrdinalSuffix(day) : '';
+      
       switch (fields.dateFormat) {
         case 'short': {
-          const day = date.getDate();
           let month = format(date, 'MMM'); // e.g., "Feb"
-          
-          // Apply uppercase if enabled
-          if (fields.dateUppercase) {
-            month = month.toUpperCase(); // "FEB"
-          }
-          
-          // Apply ordinal suffix if enabled
-          if (fields.dateOrdinal) {
-            return `${day}${getOrdinalSuffix(day)} ${month}`; // "7th FEB"
-          }
-          
-          return `${day} ${month}`; // "7 Feb"
+          if (fields.dateUppercase) month = month.toUpperCase();
+          return `${day}${ordinalSuffix} ${month}`;
         }
-        case 'full':
-          return format(date, 'EEEE, d MMMM yyyy'); // Friday, 15 January 2025
+        case 'full': {
+          const dayName = format(date, 'EEEE');
+          let month = format(date, 'MMMM');
+          const year = format(date, 'yyyy');
+          if (fields.dateUppercase) month = month.toUpperCase();
+          return `${dayName}, ${day}${ordinalSuffix} ${month} ${year}`;
+        }
         case 'long':
-        default:
-          return format(date, 'd MMMM yyyy'); // 15 January 2025
+        default: {
+          let month = format(date, 'MMMM');
+          const year = format(date, 'yyyy');
+          if (fields.dateUppercase) month = month.toUpperCase();
+          return `${day}${ordinalSuffix} ${month} ${year}`;
+        }
       }
     } catch {
       return dateStr;
