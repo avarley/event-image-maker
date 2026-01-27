@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { Slider } from '@/components/ui/slider';
 import { SavedTemplate, TextConfig, SavedOverlay, TextFieldConfig, DEFAULT_TEXT_FIELDS } from '@/types/imageGenerator';
 import { TemplateCanvas } from './TemplateCanvas';
 
@@ -509,13 +510,34 @@ export const TemplateEditor = ({
                 </div>
 
                 {/* Bottom Shadow Toggle */}
-                <div className="flex items-center gap-2">
-                  <Switch
-                    id="bottomShadow"
-                    checked={template.textConfig.bottomShadowEnabled ?? false}
-                    onCheckedChange={(checked) => handleTextFieldChange('bottomShadowEnabled', checked)}
-                  />
-                  <Label htmlFor="bottomShadow" className="text-sm">Bottom Shadow Gradient</Label>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      id="bottomShadow"
+                      checked={template.textConfig.bottomShadowEnabled ?? false}
+                      onCheckedChange={(checked) => handleTextFieldChange('bottomShadowEnabled', checked)}
+                    />
+                    <Label htmlFor="bottomShadow" className="text-sm">Bottom Shadow Gradient</Label>
+                  </div>
+                  
+                  {template.textConfig.bottomShadowEnabled && (
+                    <div className="space-y-2 pl-6 max-w-xs">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="shadowOpacity" className="text-sm">Opacity</Label>
+                        <span className="text-sm text-muted-foreground">
+                          {Math.round((template.textConfig.bottomShadowOpacity ?? 0.5) * 100)}%
+                        </span>
+                      </div>
+                      <Slider
+                        id="shadowOpacity"
+                        min={0}
+                        max={100}
+                        step={5}
+                        value={[Math.round((template.textConfig.bottomShadowOpacity ?? 0.5) * 100)]}
+                        onValueChange={([value]) => handleTextFieldChange('bottomShadowOpacity', value / 100)}
+                      />
+                    </div>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
