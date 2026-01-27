@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { Upload, Image as ImageIcon, RotateCcw, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -254,6 +254,7 @@ export const TemplateEditor = ({
   }
 
   const textFields = template.textConfig.fields || DEFAULT_TEXT_FIELDS;
+  const [showSafeZone, setShowSafeZone] = useState(false);
 
   return (
     <div className="flex-1 p-6 space-y-6 overflow-auto">
@@ -279,11 +280,23 @@ export const TemplateEditor = ({
         <CardContent className="p-4">
           <div className="mb-2 flex items-center justify-between">
             <span className="text-sm font-medium">Live Preview</span>
-            {template.baseplateDataUrl && (
-              <span className="text-xs text-muted-foreground">
-                Drag elements to reposition • Drag corners to resize overlays
-              </span>
-            )}
+            <div className="flex items-center gap-4">
+              {template.baseplateDataUrl && (
+                <>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      id="showSafeZone"
+                      checked={showSafeZone}
+                      onCheckedChange={setShowSafeZone}
+                    />
+                    <Label htmlFor="showSafeZone" className="text-sm">Show Safe Zones</Label>
+                  </div>
+                  <span className="text-xs text-muted-foreground">
+                    Drag elements to reposition
+                  </span>
+                </>
+              )}
+            </div>
           </div>
           <TemplateCanvas
             baseplateUrl={template.baseplateDataUrl}
@@ -293,6 +306,7 @@ export const TemplateEditor = ({
             overlays={template.overlays || []}
             onTextConfigChange={handleTextConfigChange}
             onOverlaysChange={handleOverlaysChange}
+            showSafeZone={showSafeZone}
           />
         </CardContent>
       </Card>

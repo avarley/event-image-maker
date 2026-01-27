@@ -9,6 +9,7 @@ interface TemplateCanvasProps {
   overlays: SavedOverlay[];
   onTextConfigChange: (config: TextConfig) => void;
   onOverlaysChange: (overlays: SavedOverlay[]) => void;
+  showSafeZone?: boolean;
 }
 
 type ActionType = 'move' | 'resize' | null;
@@ -22,6 +23,7 @@ export const TemplateCanvas = ({
   overlays,
   onTextConfigChange,
   onOverlaysChange,
+  showSafeZone = false,
 }: TemplateCanvasProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDraggingText, setIsDraggingText] = useState(false);
@@ -243,6 +245,30 @@ export const TemplateCanvas = ({
     }
   };
 
+  // Calculate safe zone bounds for both 4:5 and 5:4 aspect ratios
+  const getSafeZoneBounds = () => {
+    const width = baseplateSize.width;
+    const height = baseplateSize.height;
+    
+    // 4:5 Portrait - sides get cropped
+    // The visible width becomes height * (4/5)
+    const portrait45Width = height * (4 / 5);
+    const sideCrop = (width - portrait45Width) / 2;
+    
+    // 5:4 Landscape - bottom gets cropped
+    // The visible height becomes width * (4/5)
+    const landscape54Height = width * (4 / 5);
+    const bottomCrop = height - landscape54Height;
+    
+    return {
+      left: Math.max(0, sideCrop),
+      right: Math.max(0, sideCrop),
+      bottom: Math.max(0, bottomCrop),
+    };
+  };
+
+  const safeZoneBounds = getSafeZoneBounds();
+
   if (!baseplateUrl) {
     return (
       <div className="flex items-center justify-center h-64 bg-muted rounded-lg border-2 border-dashed border-muted-foreground/25">
@@ -368,6 +394,77 @@ export const TemplateCanvas = ({
             Text (drag to move)
           </span>
         </div>
+      )}
+
+      {/* Safe zone overlays - preview only, not in final output */}
+      {showSafeZone && baseplateSize.width > 0 && (
+        <>
+          {/* 4:5 Portrait - Left crop zone */}
+          {safeZoneBounds.left > 0 && (
+            <div
+              className="absolute top-0 left-0 bg-red-500/30 border-r-2 border-dashed border-red-500 pointer-events-none"
+              style={{
+                width: safeZoneBounds.left * scale,
+                height: baseplateSize.height * scale,
+              }}
+            >
+              <span className="absolute top-2 left-2 text-xs bg-red-500 text-white px-1 rounded">
+                4:5 crop
+              </span>
+            </div>
+          )}
+          
+          {/* 4:5 Portrait - Right crop zone */}
+          {safeZoneBounds.right > 0 && (
+            <div
+              className="absolute top-0 right-0 bg-red-500/30 border-l-2 border-dashed border-red-500 pointer-events-none"
+              style={{
+                width: safeZoneBounds.right * scale,
+                height: baseplateSize.height * scale,
+              }}
+            />
+          )}
+          
+          {/* 5:4 Landscape - Bottom crop zone */}
+          {safeZoneBounds.bottom > 0 && (
+            <div
+              className="absolute bottom-0 bg-orange-500/30 border-t-2 border-dashed border-orange-500 pointer-events-none"
+              style={{
+                height: safeZoneBounds.bottom * scale,
+                left: safeZoneBounds.left * scale,
+                right: safeZoneBounds.right * scale,
+              }}
+            >
+              <span className="absolute top-2 left-2 text-xs bg-orange-500 text-white px-1 rounded">
+                5:4 crop
+              </span>
+            </div>
+          )}
+          
+          {/* Corner indicator for overlapping danger zone */}
+          {safeZoneBounds.left > 0 && safeZoneBounds.bottom > 0 && (
+            <>
+              <div
+                className="absolute bg-red-600/40 pointer-events-none"
+                style={{
+                  left: 0,
+                  bottom: 0,
+                  width: safeZoneBounds.left * scale,
+                  height: safeZoneBounds.bottom * scale,
+                }}
+              />
+              <div
+                className="absolute bg-red-600/40 pointer-events-none"
+                style={{
+                  right: 0,
+                  bottom: 0,
+                  width: safeZoneBounds.right * scale,
+                  height: safeZoneBounds.bottom * scale,
+                }}
+              />
+            </>
+          )}
+        </>
       )}
 
       {/* Crosshair guides when dragging text */}
