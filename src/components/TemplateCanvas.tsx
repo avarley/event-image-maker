@@ -10,6 +10,7 @@ interface TemplateCanvasProps {
   onTextConfigChange: (config: TextConfig) => void;
   onOverlaysChange: (overlays: SavedOverlay[]) => void;
   showSafeZone?: boolean;
+  showEventImageOverlay?: boolean;
 }
 
 type ActionType = 'move' | 'resize' | null;
@@ -24,6 +25,7 @@ export const TemplateCanvas = ({
   onTextConfigChange,
   onOverlaysChange,
   showSafeZone = false,
+  showEventImageOverlay = false,
 }: TemplateCanvasProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDraggingText, setIsDraggingText] = useState(false);
@@ -269,6 +271,36 @@ export const TemplateCanvas = ({
 
   const safeZoneBounds = getSafeZoneBounds();
 
+  // Calculate event image bounds (matching useImageGenerator logic)
+  const getEventImageBounds = () => {
+    const width = baseplateSize.width;
+    const height = baseplateSize.height;
+    
+    // Match the 4:5 safe zone width calculation
+    const portrait45Width = height * (4 / 5);
+    const safeZoneWidth = Math.min(width, portrait45Width);
+    
+    // Event image spans 95% of the safe zone width
+    const imageWidth = safeZoneWidth * 0.95;
+    
+    // Assume 16:9 aspect ratio for the placeholder (common event image ratio)
+    const aspectRatio = 16 / 9;
+    const imageHeight = imageWidth / aspectRatio;
+    
+    // Center horizontally, positioned 100px above center
+    const imageX = (width - imageWidth) / 2;
+    const imageY = (height - imageHeight) / 2 - 100;
+    
+    return {
+      x: imageX,
+      y: imageY,
+      width: imageWidth,
+      height: imageHeight,
+    };
+  };
+
+  const eventImageBounds = getEventImageBounds();
+
   if (!baseplateUrl) {
     return (
       <div className="flex items-center justify-center h-64 bg-muted rounded-lg border-2 border-dashed border-muted-foreground/25">
@@ -364,6 +396,26 @@ export const TemplateCanvas = ({
 
       {/* Overlays BELOW event image layer */}
       {belowOverlays.map(renderOverlay)}
+
+      {/* Event image position overlay - preview only */}
+      {showEventImageOverlay && baseplateSize.width > 0 && (
+        <div
+          className="absolute border-2 border-dashed border-blue-500 bg-blue-500/10 pointer-events-none flex items-center justify-center"
+          style={{
+            left: eventImageBounds.x * scale,
+            top: eventImageBounds.y * scale,
+            width: eventImageBounds.width * scale,
+            height: eventImageBounds.height * scale,
+          }}
+        >
+          <div className="text-blue-500 text-sm font-medium bg-blue-500/20 px-2 py-1 rounded">
+            Event Image
+          </div>
+          <span className="absolute -top-6 left-0 text-xs bg-blue-500 text-white px-1 rounded">
+            Event Image Position
+          </span>
+        </div>
+      )}
 
       {/* Overlays ABOVE event image layer */}
       {aboveOverlays.map(renderOverlay)}

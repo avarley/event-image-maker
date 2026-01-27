@@ -58,6 +58,7 @@ export const TemplateEditor = ({
   sampleEventName = 'Sample Event Name',
 }: TemplateEditorProps) => {
   const [showSafeZone, setShowSafeZone] = useState(false);
+  const [showEventImageOverlay, setShowEventImageOverlay] = useState(false);
 
   const handleFileChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -290,6 +291,14 @@ export const TemplateEditor = ({
                 <>
                   <div className="flex items-center gap-2">
                     <Switch
+                      id="showEventImage"
+                      checked={showEventImageOverlay}
+                      onCheckedChange={setShowEventImageOverlay}
+                    />
+                    <Label htmlFor="showEventImage" className="text-sm">Show Event Image</Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Switch
                       id="showSafeZone"
                       checked={showSafeZone}
                       onCheckedChange={setShowSafeZone}
@@ -312,6 +321,7 @@ export const TemplateEditor = ({
             onTextConfigChange={handleTextConfigChange}
             onOverlaysChange={handleOverlaysChange}
             showSafeZone={showSafeZone}
+            showEventImageOverlay={showEventImageOverlay}
           />
         </CardContent>
       </Card>
