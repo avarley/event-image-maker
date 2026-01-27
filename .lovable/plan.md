@@ -1,29 +1,30 @@
 
 
-## Show Both Safe Zones Simultaneously
+## Two New Features: Bottom Shadow Gradient & Event Name Font Size
 
-This plan updates the template canvas to display both the 4:5 (portrait) and 5:4 (landscape) safe zone overlays at the same time, so you can see all potential crop areas in one view.
+This plan adds two features to improve text visibility and allow different text sizing for the event name.
 
-### What You'll See
+### Feature 1: Bottom Shadow Gradient
 
-When the safe zone toggle is enabled, the canvas will show:
-- **Left and right edges** highlighted in red - areas cropped when resizing to 4:5 portrait
-- **Bottom edge** highlighted in orange - area cropped when resizing to 5:4 landscape
+A semi-transparent black gradient on the bottom third of the image that makes text more readable. This is applied as the **first layer above the template baseplate** in the rendering order.
 
+**Visual effect:**
 ```text
-+----+------------------------+----+
-|████|                        |████|  <- Red (4:5 side crops)
-|████|                        |████|
-|████|     SAFE ZONE          |████|
-|████|   (Visible in all      |████|
-|████|    aspect ratios)      |████|
-|████|                        |████|
-+----+------------------------+----+
-|░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░|  <- Orange (5:4 bottom crop)
++----------------------------------+
+|                                  |
+|          EVENT IMAGE             |
+|                                  |
+|                                  |
+|░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░|  <- Gradient starts (transparent)
+|▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓|
+|██████████████████████████████████|  <- Bottom (solid black ~50% opacity)
+|       EVENT NAME TEXT            |
 +----------------------------------+
 ```
 
-The overlay will not appear in the final generated images - it's purely a visual guide in the editor.
+### Feature 2: Separate Event Name Font Size
+
+Allow the event name to have a different (typically larger) font size than the other text fields (date, venue, location).
 
 ---
 
@@ -33,178 +34,171 @@ The overlay will not appear in the final generated images - it's purely a visual
 
 | File | Changes |
 |------|---------|
-| `src/components/TemplateEditor.tsx` | Add a single "Show Safe Zones" toggle switch (no dropdown needed) |
-| `src/components/TemplateCanvas.tsx` | Accept `showSafeZone` prop and render both crop zone overlays simultaneously |
+| `src/types/imageGenerator.ts` | Add `bottomShadowEnabled` to `TextConfig` and `eventNameFontSize` for separate sizing |
+| `src/components/TemplateEditor.tsx` | Add UI toggle for bottom shadow and input for event name font size |
+| `src/components/TemplateCanvas.tsx` | Render gradient preview in editor |
+| `src/hooks/useImageGenerator.ts` | Draw gradient in final output and use separate font size for event name |
 
 ### Implementation Steps
 
-#### 1. Update `TemplateEditor.tsx`
+#### 1. Update Types (`src/types/imageGenerator.ts`)
 
-Add local state for the safe zone toggle:
-
-```typescript
-const [showSafeZone, setShowSafeZone] = useState(false);
-```
-
-Add a simple toggle in the Live Preview card header:
-
-```tsx
-<div className="mb-2 flex items-center justify-between">
-  <span className="text-sm font-medium">Live Preview</span>
-  <div className="flex items-center gap-4">
-    {template.baseplateDataUrl && (
-      <>
-        <div className="flex items-center gap-2">
-          <Switch
-            id="showSafeZone"
-            checked={showSafeZone}
-            onCheckedChange={setShowSafeZone}
-          />
-          <Label htmlFor="showSafeZone" className="text-sm">Show Safe Zones</Label>
-        </div>
-        <span className="text-xs text-muted-foreground">
-          Drag elements to reposition
-        </span>
-      </>
-    )}
-  </div>
-</div>
-```
-
-Pass the prop to TemplateCanvas:
-
-```tsx
-<TemplateCanvas
-  // ... existing props
-  showSafeZone={showSafeZone}
-/>
-```
-
-#### 2. Update `TemplateCanvas.tsx`
-
-Add `showSafeZone` to the props interface:
+Add new properties to `TextConfig`:
 
 ```typescript
-interface TemplateCanvasProps {
-  // ... existing props
-  showSafeZone?: boolean;
+export interface TextConfig {
+  fontFamily: string;
+  fontSize: number;
+  eventNameFontSize?: number; // NEW - separate size for event name
+  color: string;
+  x: number;
+  y: number;
+  maxWidth: number;
+  textAlign: CanvasTextAlign;
+  fields: TextFieldConfig;
+  bottomShadowEnabled?: boolean; // NEW - toggle for gradient
+  bottomShadowOpacity?: number;  // NEW - customise opacity (0-1)
 }
 ```
 
-Add calculation function for both safe zones:
+#### 2. Update TemplateEditor (`src/components/TemplateEditor.tsx`)
 
-```typescript
-const getSafeZoneBounds = () => {
-  const width = baseplateSize.width;
-  const height = baseplateSize.height;
-  
-  // 4:5 Portrait - sides get cropped
-  // The visible width becomes height * (4/5)
-  const portrait45Width = height * (4 / 5);
-  const sideCrop = (width - portrait45Width) / 2;
-  
-  // 5:4 Landscape - bottom gets cropped
-  // The visible height becomes width * (4/5)
-  const landscape54Height = width * (4 / 5);
-  const bottomCrop = height - landscape54Height;
-  
-  return {
-    left: Math.max(0, sideCrop),
-    right: Math.max(0, sideCrop),
-    bottom: Math.max(0, bottomCrop),
-  };
-};
+Add UI controls in the "Text Settings" section:
+
+**Bottom Shadow Toggle:**
+```tsx
+<div className="flex items-center gap-2">
+  <Switch
+    id="bottomShadow"
+    checked={template.textConfig.bottomShadowEnabled ?? false}
+    onCheckedChange={(checked) => handleTextFieldChange('bottomShadowEnabled', checked)}
+  />
+  <Label htmlFor="bottomShadow" className="text-sm">Bottom Shadow</Label>
+</div>
 ```
 
-Add the overlay rendering after the text element but before crosshairs:
-
+**Event Name Font Size Input** (shown when Event Name is enabled):
 ```tsx
-{/* Safe zone overlays - preview only, not in final output */}
-{showSafeZone && baseplateSize.width > 0 && (
-  <>
-    {/* 4:5 Portrait - Left crop zone */}
-    {safeZoneBounds.left > 0 && (
-      <div
-        className="absolute top-0 left-0 bg-red-500/30 border-r-2 border-dashed border-red-500 pointer-events-none"
-        style={{
-          width: safeZoneBounds.left * scale,
-          height: baseplateSize.height * scale,
-        }}
-      >
-        <span className="absolute top-2 left-2 text-xs bg-red-500 text-white px-1 rounded">
-          4:5 crop
-        </span>
-      </div>
-    )}
-    
-    {/* 4:5 Portrait - Right crop zone */}
-    {safeZoneBounds.right > 0 && (
-      <div
-        className="absolute top-0 right-0 bg-red-500/30 border-l-2 border-dashed border-red-500 pointer-events-none"
-        style={{
-          width: safeZoneBounds.right * scale,
-          height: baseplateSize.height * scale,
-        }}
-      />
-    )}
-    
-    {/* 5:4 Landscape - Bottom crop zone */}
-    {safeZoneBounds.bottom > 0 && (
-      <div
-        className="absolute bottom-0 left-0 right-0 bg-orange-500/30 border-t-2 border-dashed border-orange-500 pointer-events-none"
-        style={{
-          height: safeZoneBounds.bottom * scale,
-          // Avoid overlap with side zones
-          marginLeft: safeZoneBounds.left * scale,
-          marginRight: safeZoneBounds.right * scale,
-          width: `calc(100% - ${(safeZoneBounds.left + safeZoneBounds.right) * scale}px)`,
-        }}
-      >
-        <span className="absolute top-2 left-2 text-xs bg-orange-500 text-white px-1 rounded">
-          5:4 crop
-        </span>
-      </div>
-    )}
-    
-    {/* Corner indicator for overlapping danger zone */}
-    {safeZoneBounds.left > 0 && safeZoneBounds.bottom > 0 && (
-      <>
-        <div
-          className="absolute bg-red-600/40 pointer-events-none"
-          style={{
-            left: 0,
-            bottom: 0,
-            width: safeZoneBounds.left * scale,
-            height: safeZoneBounds.bottom * scale,
-          }}
-        />
-        <div
-          className="absolute bg-red-600/40 pointer-events-none"
-          style={{
-            right: 0,
-            bottom: 0,
-            width: safeZoneBounds.right * scale,
-            height: safeZoneBounds.bottom * scale,
-          }}
-        />
-      </>
-    )}
-  </>
+{textFields.showEventName && (
+  <div className="space-y-2">
+    <Label htmlFor="eventNameFontSize">Event Name Size (px)</Label>
+    <Input
+      id="eventNameFontSize"
+      type="number"
+      min={12}
+      max={200}
+      value={template.textConfig.eventNameFontSize ?? template.textConfig.fontSize}
+      onChange={(e) => handleTextFieldChange('eventNameFontSize', parseInt(e.target.value) || 56)}
+    />
+  </div>
 )}
 ```
 
-### Visual Colour Coding
+Update the default config to include new fields:
 
-| Zone | Colour | Meaning |
-|------|--------|---------|
-| Left/Right edges | Red | Cropped in 4:5 portrait |
-| Bottom edge | Orange | Cropped in 5:4 landscape |
-| Bottom corners | Darker red | Cropped in both orientations |
+```typescript
+const DEFAULT_TEXT_CONFIG: TextConfig = {
+  // ... existing fields
+  eventNameFontSize: 56,
+  bottomShadowEnabled: false,
+  bottomShadowOpacity: 0.5,
+};
+```
 
-### Key Points
+#### 3. Update TemplateCanvas (`src/components/TemplateCanvas.tsx`)
 
-- **Single toggle** - No dropdown selector, just one switch to show/hide all safe zones
-- **Distinct colours** - Red for 4:5 (sides), orange for 5:4 (bottom) makes it easy to understand which crop affects what
-- **Preview only** - Uses React DOM overlays that won't appear in the canvas-rendered final images
-- **Handles edge cases** - If the template is already narrower than 4:5 or shorter than 5:4, those zones won't render
+Add a preview of the bottom shadow gradient (visual only, matches final output):
+
+```tsx
+{/* Bottom shadow gradient preview */}
+{template.textConfig.bottomShadowEnabled && (
+  <div
+    className="absolute bottom-0 left-0 right-0 pointer-events-none"
+    style={{
+      height: baseplateSize.height * scale / 3,
+      background: `linear-gradient(to bottom, transparent, rgba(0, 0, 0, ${template.textConfig.bottomShadowOpacity ?? 0.5}))`,
+    }}
+  />
+)}
+```
+
+This will be rendered after the baseplate but before overlays in the DOM order, matching the layering in the final output.
+
+#### 4. Update useImageGenerator (`src/hooks/useImageGenerator.ts`)
+
+**Draw the gradient after baseplate, before everything else:**
+
+```typescript
+// Draw baseplate first (background)
+ctx.drawImage(template.baseplate, 0, 0);
+
+// Draw bottom shadow gradient (if enabled)
+if (template.textConfig.bottomShadowEnabled) {
+  const gradientHeight = canvasHeight / 3;
+  const gradient = ctx.createLinearGradient(
+    0, canvasHeight - gradientHeight,
+    0, canvasHeight
+  );
+  const opacity = template.textConfig.bottomShadowOpacity ?? 0.5;
+  gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
+  gradient.addColorStop(1, `rgba(0, 0, 0, ${opacity})`);
+  
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, canvasHeight - gradientHeight, canvasWidth, gradientHeight);
+}
+
+// Then continue with overlays, event image, text...
+```
+
+**Use separate font size for event name:**
+
+Update the text drawing section to check if the current line is the event name:
+
+```typescript
+const fields = textConfig.fields || DEFAULT_TEXT_FIELDS;
+const textLines = buildTextLines(event, fields);
+
+let currentY = textConfig.y;
+let isFirstLine = true;
+
+for (const lineText of textLines) {
+  // Use event name font size for first line if it's the event name
+  const currentFontSize = (isFirstLine && fields.showEventName && textConfig.eventNameFontSize)
+    ? textConfig.eventNameFontSize
+    : textConfig.fontSize;
+  
+  ctx.font = `bold ${currentFontSize}px ${textConfig.fontFamily}`;
+  const lineHeight = currentFontSize * 1.2;
+  
+  // ... word wrapping logic
+  
+  isFirstLine = false;
+  currentY += lineHeight;
+}
+```
+
+### Layer Order (Final Output)
+
+1. **Baseplate** (background template)
+2. **Bottom shadow gradient** (NEW - first layer above baseplate)
+3. **"Below" overlays**
+4. **Event image**
+5. **"Above" overlays**
+6. **Text**
+
+### UI Preview
+
+The editor will show:
+- A toggle switch for "Bottom Shadow" alongside the existing text settings
+- A slider or input for shadow opacity (optional, can default to 50%)
+- A new "Event Name Size" input that appears when Event Name is enabled
+- Live preview of the gradient in the canvas
+
+### Defaults
+
+| Setting | Default Value |
+|---------|---------------|
+| Bottom Shadow | Off |
+| Shadow Opacity | 0.5 (50%) |
+| Event Name Font Size | Same as main font size (56px) |
 
