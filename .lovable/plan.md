@@ -1,164 +1,121 @@
 
-## Add Ordinal Day & Uppercase Month Options for Short Date
+## Fix Event Image Preview Overlay Size
 
-This plan adds two new toggle options for the short date format to allow ordinal day suffixes (7th, 1st, 2nd, etc.) and uppercase months (FEB instead of Feb).
+The event image preview in the template editor shows the wrong size because it uses a hardcoded 16:9 aspect ratio, while actual event images often have different ratios (e.g., 3:2). This causes a mismatch between what you see in the editor and what gets generated.
+
+### The Problem
+
+| Setting | Preview Overlay | Actual Generation |
+|---------|-----------------|-------------------|
+| Width calculation | Same (95% of safe zone) | Same |
+| Height calculation | Assumes 16:9 ratio | Uses real image ratio |
+| Result | Shows smaller box | Image is taller, touches text |
+
+The G Flip image is 2560x1707 pixels (~3:2 ratio), making it significantly taller than a 16:9 image of the same width.
+
+### The Solution
+
+Instead of using a fixed 16:9 aspect ratio for the preview, use the actual aspect ratio of a selected event's image. If no event is selected, fall back to a more representative ratio like 3:2 (which is common for event photos).
 
 ### Summary of Changes
 
-| Change | Description |
-|--------|-------------|
-| New Config Options | Add `dateOrdinal` and `dateUppercase` boolean fields to `TextFieldConfig` |
-| UI Toggles | Show checkboxes when short date format is selected |
-| Date Formatting | Update `formatDate` function to apply ordinal suffix and uppercase transformations |
-
-### Preview Examples
-
-| Options | Output |
-|---------|--------|
-| Default short | `7 Feb` |
-| + Ordinal | `7th Feb` |
-| + Uppercase | `7 FEB` |
-| + Both | `7th FEB` |
+| File | Change |
+|------|--------|
+| `src/components/TemplateCanvas.tsx` | Accept optional `eventImageAspectRatio` prop |
+| `src/components/TemplateEditor.tsx` | Pass the selected event's image aspect ratio down to the canvas |
+| `src/pages/Index.tsx` | Compute and pass the first selected event's image aspect ratio to the editor |
 
 ---
 
 ## Technical Details
 
-### Files to Modify
+### 1. Update `TemplateCanvas.tsx`
 
-| File | Changes |
-|------|---------|
-| `src/types/imageGenerator.ts` | Add `dateOrdinal` and `dateUppercase` to `TextFieldConfig` interface and defaults |
-| `src/components/TemplateEditor.tsx` | Add checkbox toggles for ordinal and uppercase options (shown when date format is "short") |
-| `src/hooks/useImageGenerator.ts` | Update `formatDate` function to apply ordinal suffix and uppercase month |
-
-### Implementation Steps
-
-#### 1. Update `src/types/imageGenerator.ts`
-
-Add two new optional boolean fields to `TextFieldConfig`:
+Add an optional prop for the event image aspect ratio:
 
 ```typescript
-export interface TextFieldConfig {
-  showEventName: boolean;
-  showDate: boolean;
-  showLocation: boolean;
-  showVenue: boolean;
-  dateFormat: 'short' | 'long' | 'full';
-  dateOrdinal?: boolean;    // Add ordinal suffix: 7th, 1st, 2nd, 3rd
-  dateUppercase?: boolean;  // Uppercase month: FEB instead of Feb
-  locationFormat: 'city' | 'city-state' | 'city-country';
+interface TemplateCanvasProps {
+  // ... existing props
+  eventImageAspectRatio?: number; // Width / Height of actual event image
 }
 ```
 
-Update the default values:
+Update `getEventImageBounds()` to use this prop:
 
 ```typescript
-export const DEFAULT_TEXT_FIELDS: TextFieldConfig = {
-  showEventName: true,
-  showDate: false,
-  showLocation: false,
-  showVenue: false,
-  dateFormat: 'long',
-  dateOrdinal: false,
-  dateUppercase: false,
-  locationFormat: 'city-state',
+const getEventImageBounds = () => {
+  const width = baseplateSize.width;
+  const height = baseplateSize.height;
+  
+  const portrait45Width = height * (4 / 5);
+  const safeZoneWidth = Math.min(width, portrait45Width);
+  
+  const imageWidth = safeZoneWidth * 0.95;
+  
+  // Use provided aspect ratio, or default to 3:2 (common for event photos)
+  const aspectRatio = eventImageAspectRatio || 3 / 2;
+  const imageHeight = imageWidth / aspectRatio;
+  
+  const imageX = (width - imageWidth) / 2;
+  const imageY = (height - imageHeight) / 2 - 100;
+  
+  return { x: imageX, y: imageY, width: imageWidth, height: imageHeight };
 };
 ```
 
-#### 2. Update `src/components/TemplateEditor.tsx`
+### 2. Update `TemplateEditor.tsx`
 
-Add checkbox toggles below the date format dropdown, only visible when "short" format is selected:
-
-```tsx
-{textFields.showDate && textFields.dateFormat === 'short' && (
-  <div className="flex flex-wrap gap-4 pt-2">
-    <div className="flex items-center gap-2">
-      <Checkbox
-        id="dateOrdinal"
-        checked={textFields.dateOrdinal ?? false}
-        onCheckedChange={(checked) => handleFieldToggle('dateOrdinal', checked)}
-      />
-      <Label htmlFor="dateOrdinal" className="text-sm">Ordinal (7th)</Label>
-    </div>
-    <div className="flex items-center gap-2">
-      <Checkbox
-        id="dateUppercase"
-        checked={textFields.dateUppercase ?? false}
-        onCheckedChange={(checked) => handleFieldToggle('dateUppercase', checked)}
-      />
-      <Label htmlFor="dateUppercase" className="text-sm">Uppercase (FEB)</Label>
-    </div>
-  </div>
-)}
-```
-
-#### 3. Update `src/hooks/useImageGenerator.ts`
-
-Modify the `formatDate` function to handle ordinal suffixes and uppercase:
+Accept and pass through the aspect ratio prop:
 
 ```typescript
-const getOrdinalSuffix = (day: number): string => {
-  if (day > 3 && day < 21) return 'th';
-  switch (day % 10) {
-    case 1: return 'st';
-    case 2: return 'nd';
-    case 3: return 'rd';
-    default: return 'th';
-  }
-};
-
-const formatDate = useCallback((dateStr: string, fields: TextFieldConfig): string => {
-  try {
-    const date = new Date(dateStr);
-    if (isNaN(date.getTime())) return dateStr;
-    
-    switch (fields.dateFormat) {
-      case 'short': {
-        const day = date.getDate();
-        let month = format(date, 'MMM'); // e.g., "Feb"
-        
-        // Apply uppercase if enabled
-        if (fields.dateUppercase) {
-          month = month.toUpperCase(); // "FEB"
-        }
-        
-        // Apply ordinal suffix if enabled
-        if (fields.dateOrdinal) {
-          return `${day}${getOrdinalSuffix(day)} ${month}`; // "7th FEB"
-        }
-        
-        return `${day} ${month}`; // "7 Feb"
-      }
-      case 'full':
-        return format(date, 'EEEE, d MMMM yyyy');
-      case 'long':
-      default:
-        return format(date, 'd MMMM yyyy');
-    }
-  } catch {
-    return dateStr;
-  }
-}, []);
-```
-
-Update the function signature in `buildTextLines` to pass the full `fields` object:
-
-```typescript
-if (fields.showDate && event.STARTS_AT) {
-  lines.push(formatDate(event.STARTS_AT, fields)); // Pass full fields object
+interface TemplateEditorProps {
+  // ... existing props
+  eventImageAspectRatio?: number;
 }
+
+// Pass to TemplateCanvas
+<TemplateCanvas
+  // ... existing props
+  eventImageAspectRatio={eventImageAspectRatio}
+/>
 ```
 
-### Ordinal Suffix Logic
+### 3. Update `Index.tsx`
 
-The ordinal suffix follows English grammar rules:
+Compute the aspect ratio from the first selected event's image:
 
-| Day | Suffix | Result |
-|-----|--------|--------|
-| 1, 21, 31 | st | 1st, 21st, 31st |
-| 2, 22 | nd | 2nd, 22nd |
-| 3, 23 | rd | 3rd, 23rd |
-| 4-20, 24-30 | th | 4th, 11th, 12th, 13th, 24th |
+```typescript
+// Compute event image aspect ratio for preview
+const [eventImageAspectRatio, setEventImageAspectRatio] = useState<number | undefined>();
 
-Note: 11th, 12th, 13th are special cases (not 11st, 12nd, 13rd) - handled by the `day > 3 && day < 21` check.
+// When selected events change, load first event's image to get aspect ratio
+useEffect(() => {
+  const firstSelectedEvent = events.find((e) => selectedEventIds.has(e.EVENT_ID));
+  if (firstSelectedEvent) {
+    const img = new Image();
+    img.onload = () => {
+      setEventImageAspectRatio(img.width / img.height);
+    };
+    // Use custom image if overridden, otherwise the large URL
+    const imageUrl = imageOverrides[firstSelectedEvent.EVENT_ID] 
+      || firstSelectedEvent.EVENT_IMAGE_LARGE_URL;
+    img.src = imageUrl.startsWith('http') 
+      ? `https://corsproxy.io/?${encodeURIComponent(imageUrl)}`
+      : imageUrl;
+  } else {
+    setEventImageAspectRatio(undefined);
+  }
+}, [events, selectedEventIds, imageOverrides]);
+
+// Pass to TemplateEditor
+<TemplateEditor
+  // ... existing props
+  eventImageAspectRatio={eventImageAspectRatio}
+/>
+```
+
+### Why 3:2 as Default?
+
+- 16:9 (1.78:1) is common for video thumbnails but makes images look shorter
+- 3:2 (1.5:1) is more common for event photography and album art
+- Using 3:2 gives a more accurate preview when no event is selected
