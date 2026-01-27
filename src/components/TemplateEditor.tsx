@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Slider } from '@/components/ui/slider';
 import { SavedTemplate, TextConfig, SavedOverlay, TextFieldConfig, DEFAULT_TEXT_FIELDS } from '@/types/imageGenerator';
 import { TemplateCanvas } from './TemplateCanvas';
@@ -474,11 +475,31 @@ export const TemplateEditor = ({
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="short">15 Jan</SelectItem>
+                        <SelectItem value="short">15 Jan</SelectItem>
                             <SelectItem value="long">15 January 2025</SelectItem>
                             <SelectItem value="full">Friday, 15 January 2025</SelectItem>
                           </SelectContent>
                         </Select>
+                        {textFields.dateFormat === 'short' && (
+                          <div className="flex flex-wrap gap-4 pt-2">
+                            <div className="flex items-center gap-2">
+                              <Checkbox
+                                id="dateOrdinal"
+                                checked={textFields.dateOrdinal ?? false}
+                                onCheckedChange={(checked) => handleFieldToggle('dateOrdinal', checked === true)}
+                              />
+                              <Label htmlFor="dateOrdinal" className="text-sm">Ordinal (7th)</Label>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Checkbox
+                                id="dateUppercase"
+                                checked={textFields.dateUppercase ?? false}
+                                onCheckedChange={(checked) => handleFieldToggle('dateUppercase', checked === true)}
+                              />
+                              <Label htmlFor="dateUppercase" className="text-sm">Uppercase (FEB)</Label>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                     {textFields.showLocation && (
