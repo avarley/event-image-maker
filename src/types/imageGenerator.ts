@@ -27,6 +27,8 @@ export interface TextFieldConfig {
   showLocation: boolean;
   showVenue: boolean;
   dateFormat: 'short' | 'long' | 'full'; // e.g., "Jan 15", "January 15, 2025", "Friday, January 15, 2025"
+  dateOrdinal?: boolean;    // Add ordinal suffix: 7th, 1st, 2nd, 3rd
+  dateUppercase?: boolean;  // Uppercase month: FEB instead of Feb
   locationFormat: 'city' | 'city-state' | 'city-country'; // e.g., "Austin", "Austin, TX", "Austin, USA"
 }
 
@@ -98,5 +100,7 @@ export const DEFAULT_TEXT_FIELDS: TextFieldConfig = {
   showLocation: false,
   showVenue: false,
   dateFormat: 'long',
+  dateOrdinal: false,
+  dateUppercase: false,
   locationFormat: 'city-state',
 };

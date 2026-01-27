@@ -18,14 +18,38 @@ export const useImageGenerator = () => {
     });
   }, []);
 
-  const formatDate = useCallback((dateStr: string, dateFormat: TextFieldConfig['dateFormat']): string => {
+  const getOrdinalSuffix = (day: number): string => {
+    if (day > 3 && day < 21) return 'th';
+    switch (day % 10) {
+      case 1: return 'st';
+      case 2: return 'nd';
+      case 3: return 'rd';
+      default: return 'th';
+    }
+  };
+
+  const formatDate = useCallback((dateStr: string, fields: TextFieldConfig): string => {
     try {
       const date = new Date(dateStr);
       if (isNaN(date.getTime())) return dateStr;
       
-      switch (dateFormat) {
-        case 'short':
-          return format(date, 'd MMM'); // 15 Jan
+      switch (fields.dateFormat) {
+        case 'short': {
+          const day = date.getDate();
+          let month = format(date, 'MMM'); // e.g., "Feb"
+          
+          // Apply uppercase if enabled
+          if (fields.dateUppercase) {
+            month = month.toUpperCase(); // "FEB"
+          }
+          
+          // Apply ordinal suffix if enabled
+          if (fields.dateOrdinal) {
+            return `${day}${getOrdinalSuffix(day)} ${month}`; // "7th FEB"
+          }
+          
+          return `${day} ${month}`; // "7 Feb"
+        }
         case 'full':
           return format(date, 'EEEE, d MMMM yyyy'); // Friday, 15 January 2025
         case 'long':
@@ -58,7 +82,7 @@ export const useImageGenerator = () => {
       lines.push(event.EVENT_NAME);
     }
     if (fields.showDate && event.STARTS_AT) {
-      lines.push(formatDate(event.STARTS_AT, fields.dateFormat));
+      lines.push(formatDate(event.STARTS_AT, fields));
     }
     
     // Concatenate venue and location on the same line
