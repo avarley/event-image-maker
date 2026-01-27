@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -48,6 +48,27 @@ const Index = () => {
     const firstSelectedEvent = events.find((e) => selectedEventIds.has(e.EVENT_ID));
     return firstSelectedEvent?.EVENT_NAME || 'Sample Event Name';
   }, [events, selectedEventIds]);
+
+  // Compute event image aspect ratio for preview
+  const [eventImageAspectRatio, setEventImageAspectRatio] = useState<number | undefined>();
+
+  useEffect(() => {
+    const firstSelectedEvent = events.find((e) => selectedEventIds.has(e.EVENT_ID));
+    if (firstSelectedEvent) {
+      const img = new Image();
+      img.onload = () => {
+        setEventImageAspectRatio(img.width / img.height);
+      };
+      // Use custom image if overridden, otherwise the large URL
+      const imageUrl = imageOverrides[firstSelectedEvent.EVENT_ID] 
+        || firstSelectedEvent.EVENT_IMAGE_LARGE_URL;
+      img.src = imageUrl.startsWith('http') 
+        ? `https://corsproxy.io/?${encodeURIComponent(imageUrl)}`
+        : imageUrl;
+    } else {
+      setEventImageAspectRatio(undefined);
+    }
+  }, [events, selectedEventIds, imageOverrides]);
 
   const handleRenameTemplate = useCallback(
     (id: string, name: string) => {
@@ -256,6 +277,7 @@ const Index = () => {
               template={activeTemplate}
               onUpdateTemplate={updateTemplate}
               sampleEventName={sampleEventName}
+              eventImageAspectRatio={eventImageAspectRatio}
             />
           </div>
         </TabsContent>

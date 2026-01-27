@@ -11,6 +11,7 @@ interface TemplateCanvasProps {
   onOverlaysChange: (overlays: SavedOverlay[]) => void;
   showSafeZone?: boolean;
   showEventImageOverlay?: boolean;
+  eventImageAspectRatio?: number; // Width / Height of actual event image
 }
 
 type ActionType = 'move' | 'resize' | null;
@@ -26,6 +27,7 @@ export const TemplateCanvas = ({
   onOverlaysChange,
   showSafeZone = false,
   showEventImageOverlay = false,
+  eventImageAspectRatio,
 }: TemplateCanvasProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDraggingText, setIsDraggingText] = useState(false);
@@ -283,8 +285,8 @@ export const TemplateCanvas = ({
     // Event image spans 95% of the safe zone width
     const imageWidth = safeZoneWidth * 0.95;
     
-    // Assume 16:9 aspect ratio for the placeholder (common event image ratio)
-    const aspectRatio = 16 / 9;
+    // Use provided aspect ratio, or default to 3:2 (common for event photos)
+    const aspectRatio = eventImageAspectRatio || 3 / 2;
     const imageHeight = imageWidth / aspectRatio;
     
     // Center horizontally, positioned 100px above center

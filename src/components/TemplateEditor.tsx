@@ -15,6 +15,7 @@ interface TemplateEditorProps {
   template: SavedTemplate | null;
   onUpdateTemplate: (id: string, updates: Partial<SavedTemplate>) => void;
   sampleEventName?: string;
+  eventImageAspectRatio?: number;
 }
 
 const DEFAULT_TEXT_CONFIG: TextConfig = {
@@ -57,6 +58,7 @@ export const TemplateEditor = ({
   template,
   onUpdateTemplate,
   sampleEventName = 'Sample Event Name',
+  eventImageAspectRatio,
 }: TemplateEditorProps) => {
   const [showSafeZone, setShowSafeZone] = useState(false);
   const [showEventImageOverlay, setShowEventImageOverlay] = useState(false);
@@ -323,6 +325,7 @@ export const TemplateEditor = ({
             onOverlaysChange={handleOverlaysChange}
             showSafeZone={showSafeZone}
             showEventImageOverlay={showEventImageOverlay}
+            eventImageAspectRatio={eventImageAspectRatio}
           />
         </CardContent>
       </Card>
