@@ -18,12 +18,15 @@ interface TemplateEditorProps {
 const DEFAULT_TEXT_CONFIG: TextConfig = {
   fontFamily: 'Roboto',
   fontSize: 56,
+  eventNameFontSize: 56,
   color: '#ffffff',
   x: 540,
   y: 940,
   maxWidth: 550,
   textAlign: 'center',
   fields: DEFAULT_TEXT_FIELDS,
+  bottomShadowEnabled: false,
+  bottomShadowOpacity: 0.5,
 };
 
 const FONT_FAMILIES = [
@@ -92,7 +95,7 @@ export const TemplateEditor = ({
   );
 
   const handleTextFieldChange = useCallback(
-    (key: keyof TextConfig, value: string | number) => {
+    (key: keyof TextConfig, value: string | number | boolean) => {
       if (!template) return;
       onUpdateTemplate(template.id, {
         textConfig: {
@@ -486,6 +489,33 @@ export const TemplateEditor = ({
                       </div>
                     )}
                   </div>
+
+                  {/* Event Name Font Size - only shown when Event Name is enabled */}
+                  {textFields.showEventName && (
+                    <div className="pt-2">
+                      <div className="space-y-2 max-w-xs">
+                        <Label htmlFor="eventNameFontSize" className="text-sm">Event Name Size (px)</Label>
+                        <Input
+                          id="eventNameFontSize"
+                          type="number"
+                          min={12}
+                          max={200}
+                          value={template.textConfig.eventNameFontSize ?? template.textConfig.fontSize}
+                          onChange={(e) => handleTextFieldChange('eventNameFontSize', parseInt(e.target.value) || 56)}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Bottom Shadow Toggle */}
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id="bottomShadow"
+                    checked={template.textConfig.bottomShadowEnabled ?? false}
+                    onCheckedChange={(checked) => handleTextFieldChange('bottomShadowEnabled', checked)}
+                  />
+                  <Label htmlFor="bottomShadow" className="text-sm">Bottom Shadow Gradient</Label>
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

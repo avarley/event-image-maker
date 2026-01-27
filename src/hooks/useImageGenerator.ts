@@ -101,6 +101,21 @@ export const useImageGenerator = () => {
       // Draw baseplate first (background)
       ctx.drawImage(template.baseplate, 0, 0);
       
+      // Draw bottom shadow gradient (if enabled) - first layer above baseplate
+      if (template.textConfig.bottomShadowEnabled) {
+        const gradientHeight = canvasHeight / 3;
+        const gradient = ctx.createLinearGradient(
+          0, canvasHeight - gradientHeight,
+          0, canvasHeight
+        );
+        const opacity = template.textConfig.bottomShadowOpacity ?? 0.5;
+        gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
+        gradient.addColorStop(1, `rgba(0, 0, 0, ${opacity})`);
+        
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, canvasHeight - gradientHeight, canvasWidth, gradientHeight);
+      }
+      
       // Load event image (use custom URL if provided)
       const imageUrl = customImageUrl || event.EVENT_IMAGE_LARGE_URL;
       const eventImage = await loadImage(imageUrl);
@@ -137,16 +152,23 @@ export const useImageGenerator = () => {
         const fields = textConfig.fields || DEFAULT_TEXT_FIELDS;
         const textLines = buildTextLines(event, fields);
         
-        ctx.font = `bold ${textConfig.fontSize}px ${textConfig.fontFamily}`;
         ctx.fillStyle = textConfig.color;
         ctx.textAlign = textConfig.textAlign;
         ctx.textBaseline = 'top';
         
-        const lineHeight = textConfig.fontSize * 1.2;
         let currentY = textConfig.y;
+        let isFirstLine = true;
         
         // Draw each text line with word wrapping
         for (const lineText of textLines) {
+          // Use event name font size for first line if it's the event name
+          const currentFontSize = (isFirstLine && fields.showEventName && textConfig.eventNameFontSize)
+            ? textConfig.eventNameFontSize
+            : textConfig.fontSize;
+          
+          ctx.font = `bold ${currentFontSize}px ${textConfig.fontFamily}`;
+          const lineHeight = currentFontSize * 1.2;
+          
           const words = lineText.split(' ');
           let line = '';
           
@@ -164,6 +186,7 @@ export const useImageGenerator = () => {
           }
           ctx.fillText(line.trim(), textConfig.x, currentY);
           currentY += lineHeight;
+          isFirstLine = false;
         }
       }
       

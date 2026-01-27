@@ -33,12 +33,15 @@ export interface TextFieldConfig {
 export interface TextConfig {
   fontFamily: string;
   fontSize: number;
+  eventNameFontSize?: number;
   color: string;
   x: number;
   y: number;
   maxWidth: number;
   textAlign: CanvasTextAlign;
   fields: TextFieldConfig;
+  bottomShadowEnabled?: boolean;
+  bottomShadowOpacity?: number;
 }
 
 export interface OverlayConfig {
