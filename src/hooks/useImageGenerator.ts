@@ -120,8 +120,12 @@ export const useImageGenerator = () => {
       const imageUrl = customImageUrl || event.EVENT_IMAGE_LARGE_URL;
       const eventImage = await loadImage(imageUrl);
       
-      // Calculate event image size (wider, ~800px)
-      const targetWidth = Math.min(canvasWidth * 0.8, 800);
+      // Calculate 4:5 safe zone width (visible area when cropped to portrait)
+      const portrait45Width = canvasHeight * (4 / 5);
+      const safeZoneWidth = Math.min(canvasWidth, portrait45Width);
+      
+      // Event image spans 95% of the safe zone width
+      const targetWidth = safeZoneWidth * 0.95;
       const eventAspect = eventImage.width / eventImage.height;
       
       const drawWidth = targetWidth;
