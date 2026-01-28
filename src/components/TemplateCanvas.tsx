@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
-import { TextConfig, SavedOverlay } from '@/types/imageGenerator';
+import { TextConfig, SavedOverlay, DEFAULT_TEXT_FIELDS, FontWeight } from '@/types/imageGenerator';
 
 interface TemplateCanvasProps {
   baseplateUrl: string;
@@ -443,17 +443,30 @@ export const TemplateCanvas = ({
             }}
           >
             {(sampleText || 'Sample Event Name').split('\n').map((line, index) => {
+              const fields = textConfig.fields || DEFAULT_TEXT_FIELDS;
               // First line (event name) uses eventNameFontSize if available
               const fontSize = index === 0 && textConfig.eventNameFontSize 
                 ? textConfig.eventNameFontSize 
                 : textConfig.fontSize;
+              
+              // Determine font weight based on which line this is
+              let fontWeight: FontWeight = '700';
+              if (index === 0 && fields.showEventName) {
+                fontWeight = fields.eventNameFontWeight || '700';
+              } else if (index === 1 && fields.showDate) {
+                fontWeight = fields.dateFontWeight || '700';
+              } else if (index >= 1) {
+                // Venue/Location line
+                fontWeight = fields.venueLocationFontWeight || '700';
+              }
+              
               return (
                 <div
                   key={index}
-                  className="font-bold"
                   style={{
                     fontFamily: textConfig.fontFamily,
                     fontSize: fontSize * scale,
+                    fontWeight: parseInt(fontWeight),
                     color: textConfig.color,
                     textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
                     lineHeight: 1.2,
