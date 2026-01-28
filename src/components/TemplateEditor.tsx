@@ -11,6 +11,7 @@ import { Slider } from '@/components/ui/slider';
 import { SavedTemplate, TextConfig, SavedOverlay, TextFieldConfig, DEFAULT_TEXT_FIELDS, FontWeight, OverlayPreset } from '@/types/imageGenerator';
 import { TemplateCanvas } from './TemplateCanvas';
 import { ImportOverlaysDialog } from './ImportOverlaysDialog';
+import { compressImageFile, formatBytes, estimateDataUrlSize } from '@/utils/imageCompression';
 import { toast } from 'sonner';
 
 interface TemplateEditorProps {
@@ -76,29 +77,40 @@ export const TemplateEditor = ({
   const [showEventImageOverlay, setShowEventImageOverlay] = useState(false);
 
   const handleFileChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
       if (!template) return;
       const file = e.target.files?.[0];
       if (!file) return;
 
-      const reader = new FileReader();
-      reader.onload = (event) => {
+      try {
+        const originalSize = file.size;
+        const compressedDataUrl = await compressImageFile(file, {
+          maxWidth: 2048,
+          maxHeight: 2048,
+          quality: 0.85,
+        });
+        const compressedSize = estimateDataUrlSize(compressedDataUrl);
+        
         const img = new Image();
         img.onload = () => {
-          const dataUrl = event.target?.result as string;
-          
           onUpdateTemplate(template.id, {
-            baseplateDataUrl: dataUrl,
+            baseplateDataUrl: compressedDataUrl,
             textConfig: {
               ...template.textConfig,
               x: Math.floor(img.width / 2),
               maxWidth: img.width - 100,
             },
           });
+          
+          if (compressedSize < originalSize) {
+            toast.success(`Template compressed: ${formatBytes(originalSize)} → ${formatBytes(compressedSize)}`);
+          }
         };
-        img.src = event.target?.result as string;
-      };
-      reader.readAsDataURL(file);
+        img.src = compressedDataUrl;
+      } catch (error) {
+        console.error('Failed to compress image:', error);
+        toast.error('Failed to process image');
+      }
     },
     [template, onUpdateTemplate]
   );
@@ -161,17 +173,23 @@ export const TemplateEditor = ({
   }, [template, onUpdateTemplate]);
 
   const handleOverlayUpload = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
       if (!template) return;
       const file = e.target.files?.[0];
       if (!file) return;
 
-      const reader = new FileReader();
-      reader.onload = (event) => {
+      try {
+        const originalSize = file.size;
+        // Use smaller max dimensions for overlays
+        const compressedDataUrl = await compressImageFile(file, {
+          maxWidth: 1024,
+          maxHeight: 1024,
+          quality: 0.8,
+        });
+        const compressedSize = estimateDataUrlSize(compressedDataUrl);
+        
         const img = new Image();
         img.onload = () => {
-          const dataUrl = event.target?.result as string;
-          
           // Scale to fit within 30% of template width
           let baseplateWidth = 1080; // default
           if (template.baseplateDataUrl) {
@@ -193,7 +211,7 @@ export const TemplateEditor = ({
           const newOverlay: SavedOverlay = {
             id: crypto.randomUUID(),
             name: `Overlay ${existingOverlays.length + 1}`,
-            dataUrl,
+            dataUrl: compressedDataUrl,
             x,
             y,
             width: Math.round(width),
@@ -204,10 +222,16 @@ export const TemplateEditor = ({
           onUpdateTemplate(template.id, {
             overlays: [...(template.overlays || []), newOverlay],
           });
+          
+          if (compressedSize < originalSize) {
+            toast.success(`Overlay compressed: ${formatBytes(originalSize)} → ${formatBytes(compressedSize)}`);
+          }
         };
-        img.src = event.target?.result as string;
-      };
-      reader.readAsDataURL(file);
+        img.src = compressedDataUrl;
+      } catch (error) {
+        console.error('Failed to compress overlay:', error);
+        toast.error('Failed to process overlay');
+      }
       
       // Reset input so same file can be uploaded again
       e.target.value = '';
