@@ -218,6 +218,9 @@ export const TemplateEditor = ({
             width: Math.round(width),
             height: Math.round(height),
             layer: 'above',
+            rotation: 0,
+            flipHorizontal: false,
+            flipVertical: false,
           };
 
           onUpdateTemplate(template.id, {
