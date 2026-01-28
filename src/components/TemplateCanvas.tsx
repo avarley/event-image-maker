@@ -329,15 +329,16 @@ export const TemplateCanvas = ({
     const portrait45Width = height * (4 / 5);
     const sideCrop = (width - portrait45Width) / 2;
     
-    // 5:4 Landscape - bottom gets cropped
+    // 5:4 Landscape - top and bottom get cropped (centered)
     // The visible height becomes width * (4/5)
     const landscape54Height = width * (4 / 5);
-    const bottomCrop = height - landscape54Height;
+    const verticalCrop = (height - landscape54Height) / 2;
     
     return {
       left: Math.max(0, sideCrop),
       right: Math.max(0, sideCrop),
-      bottom: Math.max(0, bottomCrop),
+      top: Math.max(0, verticalCrop),
+      bottom: Math.max(0, verticalCrop),
     };
   };
 
@@ -636,6 +637,22 @@ export const TemplateCanvas = ({
             />
           )}
           
+          {/* 5:4 Landscape - Top crop zone */}
+          {safeZoneBounds.top > 0 && (
+            <div
+              className="absolute top-0 bg-orange-500/30 border-b-2 border-dashed border-orange-500 pointer-events-none"
+              style={{
+                height: safeZoneBounds.top * scale,
+                left: safeZoneBounds.left * scale,
+                right: safeZoneBounds.right * scale,
+              }}
+            >
+              <span className="absolute bottom-2 left-2 text-xs bg-orange-500 text-white px-1 rounded">
+                5:4 crop
+              </span>
+            </div>
+          )}
+          
           {/* 5:4 Landscape - Bottom crop zone */}
           {safeZoneBounds.bottom > 0 && (
             <div
@@ -645,34 +662,60 @@ export const TemplateCanvas = ({
                 left: safeZoneBounds.left * scale,
                 right: safeZoneBounds.right * scale,
               }}
-            >
-              <span className="absolute top-2 left-2 text-xs bg-orange-500 text-white px-1 rounded">
-                5:4 crop
-              </span>
-            </div>
+            />
           )}
           
-          {/* Corner indicator for overlapping danger zone */}
-          {safeZoneBounds.left > 0 && safeZoneBounds.bottom > 0 && (
+          {/* Corner indicators for overlapping danger zones */}
+          {safeZoneBounds.left > 0 && (safeZoneBounds.top > 0 || safeZoneBounds.bottom > 0) && (
             <>
-              <div
-                className="absolute bg-red-600/40 pointer-events-none"
-                style={{
-                  left: 0,
-                  bottom: 0,
-                  width: safeZoneBounds.left * scale,
-                  height: safeZoneBounds.bottom * scale,
-                }}
-              />
-              <div
-                className="absolute bg-red-600/40 pointer-events-none"
-                style={{
-                  right: 0,
-                  bottom: 0,
-                  width: safeZoneBounds.right * scale,
-                  height: safeZoneBounds.bottom * scale,
-                }}
-              />
+              {/* Top-left corner */}
+              {safeZoneBounds.top > 0 && (
+                <div
+                  className="absolute bg-red-600/40 pointer-events-none"
+                  style={{
+                    left: 0,
+                    top: 0,
+                    width: safeZoneBounds.left * scale,
+                    height: safeZoneBounds.top * scale,
+                  }}
+                />
+              )}
+              {/* Top-right corner */}
+              {safeZoneBounds.top > 0 && (
+                <div
+                  className="absolute bg-red-600/40 pointer-events-none"
+                  style={{
+                    right: 0,
+                    top: 0,
+                    width: safeZoneBounds.right * scale,
+                    height: safeZoneBounds.top * scale,
+                  }}
+                />
+              )}
+              {/* Bottom-left corner */}
+              {safeZoneBounds.bottom > 0 && (
+                <div
+                  className="absolute bg-red-600/40 pointer-events-none"
+                  style={{
+                    left: 0,
+                    bottom: 0,
+                    width: safeZoneBounds.left * scale,
+                    height: safeZoneBounds.bottom * scale,
+                  }}
+                />
+              )}
+              {/* Bottom-right corner */}
+              {safeZoneBounds.bottom > 0 && (
+                <div
+                  className="absolute bg-red-600/40 pointer-events-none"
+                  style={{
+                    right: 0,
+                    bottom: 0,
+                    width: safeZoneBounds.right * scale,
+                    height: safeZoneBounds.bottom * scale,
+                  }}
+                />
+              )}
             </>
           )}
         </>
