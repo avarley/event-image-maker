@@ -36,6 +36,8 @@ export interface TextFieldConfig {
   eventNameFontWeight?: FontWeight;
   dateFontWeight?: FontWeight;
   venueLocationFontWeight?: FontWeight;
+  // Event name styling
+  eventNameUppercase?: boolean;
 }
 
 export interface TextConfig {
@@ -112,4 +114,5 @@ export const DEFAULT_TEXT_FIELDS: TextFieldConfig = {
   eventNameFontWeight: '700',
   dateFontWeight: '700',
   venueLocationFontWeight: '700',
+  eventNameUppercase: false,
 };

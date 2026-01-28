@@ -442,9 +442,10 @@ export const TemplateCanvas = ({
               textAlign: textConfig.textAlign,
             }}
           >
-            {(sampleText || 'Sample Event Name').split('\n').map((line, index) => {
+            {(sampleText || 'Sample Event Name').split('\n').map((lineText, index) => {
               const fields = textConfig.fields || DEFAULT_TEXT_FIELDS;
-              // First line (event name) uses eventNameFontSize if available
+              // Apply uppercase to first line (event name) if enabled
+              const line = index === 0 && fields.eventNameUppercase ? lineText.toUpperCase() : lineText;
               const fontSize = index === 0 && textConfig.eventNameFontSize 
                 ? textConfig.eventNameFontSize 
                 : textConfig.fontSize;
