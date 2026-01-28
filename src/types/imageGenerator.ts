@@ -21,6 +21,8 @@ export interface EventData {
   PRIMARY_URL: string;
 }
 
+export type FontWeight = '400' | '500' | '700' | '900';
+
 export interface TextFieldConfig {
   showEventName: boolean;
   showDate: boolean;
@@ -30,6 +32,10 @@ export interface TextFieldConfig {
   dateOrdinal?: boolean;    // Add ordinal suffix: 7th, 1st, 2nd, 3rd
   dateUppercase?: boolean;  // Uppercase month: FEB instead of Feb
   locationFormat: 'city' | 'city-state' | 'city-country'; // e.g., "Austin", "Austin, TX", "Austin, USA"
+  // Per-field font weights
+  eventNameFontWeight?: FontWeight;
+  dateFontWeight?: FontWeight;
+  venueLocationFontWeight?: FontWeight;
 }
 
 export interface TextConfig {
@@ -103,4 +109,7 @@ export const DEFAULT_TEXT_FIELDS: TextFieldConfig = {
   dateOrdinal: false,
   dateUppercase: false,
   locationFormat: 'city-state',
+  eventNameFontWeight: '700',
+  dateFontWeight: '700',
+  venueLocationFontWeight: '700',
 };

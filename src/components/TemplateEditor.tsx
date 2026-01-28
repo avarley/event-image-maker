@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Slider } from '@/components/ui/slider';
-import { SavedTemplate, TextConfig, SavedOverlay, TextFieldConfig, DEFAULT_TEXT_FIELDS } from '@/types/imageGenerator';
+import { SavedTemplate, TextConfig, SavedOverlay, TextFieldConfig, DEFAULT_TEXT_FIELDS, FontWeight } from '@/types/imageGenerator';
 import { TemplateCanvas } from './TemplateCanvas';
 
 interface TemplateEditorProps {
@@ -45,6 +45,14 @@ const FONT_FAMILIES = [
   'Arial Black',
   'Lucida Console',
 ];
+
+const FONT_WEIGHTS: { value: FontWeight; label: string }[] = [
+  { value: '400', label: 'Regular' },
+  { value: '500', label: 'Medium' },
+  { value: '700', label: 'Bold' },
+  { value: '900', label: 'Black' },
+];
+
 
 // Sample data for preview (Australian date format)
 const SAMPLE_EVENT = {
@@ -430,38 +438,116 @@ export const TemplateEditor = ({
                 {/* Text Fields Toggles */}
                 <div className="border rounded-lg p-4 space-y-3">
                   <span className="text-sm font-medium">Display Fields</span>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="flex items-center gap-2">
-                      <Switch
-                        id="showEventName"
-                        checked={textFields.showEventName}
-                        onCheckedChange={(checked) => handleFieldToggle('showEventName', checked)}
-                      />
-                      <Label htmlFor="showEventName" className="text-sm">Event Name</Label>
+                  <div className="space-y-4">
+                    {/* Event Name */}
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2 min-w-32">
+                        <Switch
+                          id="showEventName"
+                          checked={textFields.showEventName}
+                          onCheckedChange={(checked) => handleFieldToggle('showEventName', checked)}
+                        />
+                        <Label htmlFor="showEventName" className="text-sm">Event Name</Label>
+                      </div>
+                      {textFields.showEventName && (
+                        <Select
+                          value={textFields.eventNameFontWeight || '700'}
+                          onValueChange={(value) => handleFieldToggle('eventNameFontWeight', value)}
+                        >
+                          <SelectTrigger className="w-28">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {FONT_WEIGHTS.map((fw) => (
+                              <SelectItem key={fw.value} value={fw.value}>{fw.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Switch
-                        id="showDate"
-                        checked={textFields.showDate}
-                        onCheckedChange={(checked) => handleFieldToggle('showDate', checked)}
-                      />
-                      <Label htmlFor="showDate" className="text-sm">Date</Label>
+                    
+                    {/* Date */}
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2 min-w-32">
+                        <Switch
+                          id="showDate"
+                          checked={textFields.showDate}
+                          onCheckedChange={(checked) => handleFieldToggle('showDate', checked)}
+                        />
+                        <Label htmlFor="showDate" className="text-sm">Date</Label>
+                      </div>
+                      {textFields.showDate && (
+                        <Select
+                          value={textFields.dateFontWeight || '700'}
+                          onValueChange={(value) => handleFieldToggle('dateFontWeight', value)}
+                        >
+                          <SelectTrigger className="w-28">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {FONT_WEIGHTS.map((fw) => (
+                              <SelectItem key={fw.value} value={fw.value}>{fw.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Switch
-                        id="showVenue"
-                        checked={textFields.showVenue}
-                        onCheckedChange={(checked) => handleFieldToggle('showVenue', checked)}
-                      />
-                      <Label htmlFor="showVenue" className="text-sm">Venue</Label>
+                    
+                    {/* Venue */}
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2 min-w-32">
+                        <Switch
+                          id="showVenue"
+                          checked={textFields.showVenue}
+                          onCheckedChange={(checked) => handleFieldToggle('showVenue', checked)}
+                        />
+                        <Label htmlFor="showVenue" className="text-sm">Venue</Label>
+                      </div>
+                      {(textFields.showVenue || textFields.showLocation) && !textFields.showLocation && (
+                        <Select
+                          value={textFields.venueLocationFontWeight || '700'}
+                          onValueChange={(value) => handleFieldToggle('venueLocationFontWeight', value)}
+                        >
+                          <SelectTrigger className="w-28">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {FONT_WEIGHTS.map((fw) => (
+                              <SelectItem key={fw.value} value={fw.value}>{fw.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Switch
-                        id="showLocation"
-                        checked={textFields.showLocation}
-                        onCheckedChange={(checked) => handleFieldToggle('showLocation', checked)}
-                      />
-                      <Label htmlFor="showLocation" className="text-sm">Location</Label>
+                    
+                    {/* Location */}
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2 min-w-32">
+                        <Switch
+                          id="showLocation"
+                          checked={textFields.showLocation}
+                          onCheckedChange={(checked) => handleFieldToggle('showLocation', checked)}
+                        />
+                        <Label htmlFor="showLocation" className="text-sm">Location</Label>
+                      </div>
+                      {(textFields.showVenue || textFields.showLocation) && (
+                        <Select
+                          value={textFields.venueLocationFontWeight || '700'}
+                          onValueChange={(value) => handleFieldToggle('venueLocationFontWeight', value)}
+                        >
+                          <SelectTrigger className="w-28">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {FONT_WEIGHTS.map((fw) => (
+                              <SelectItem key={fw.value} value={fw.value}>{fw.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                      {(textFields.showVenue && textFields.showLocation) && (
+                        <span className="text-xs text-muted-foreground">(shared with Venue)</span>
+                      )}
                     </div>
                   </div>
 
