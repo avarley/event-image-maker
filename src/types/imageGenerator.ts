@@ -76,6 +76,12 @@ export interface SavedOverlay {
   layer: 'below' | 'above';
 }
 
+export interface OverlayPreset {
+  id: string;
+  name: string;
+  overlays: SavedOverlay[];
+}
+
 export interface TemplateConfig {
   baseplate: HTMLImageElement | null;
   baseplateUrl: string;
@@ -91,6 +97,8 @@ export interface SavedTemplate {
   textConfig: TextConfig;
   textEnabled: boolean;
   overlays: SavedOverlay[];
+  overlayPresets?: OverlayPreset[];
+  activePresetId?: string | null;
   createdAt: number;
   updatedAt: number;
 }

@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { Upload, Image as ImageIcon, RotateCcw, Plus, Trash2 } from 'lucide-react';
+import { Upload, Image as ImageIcon, RotateCcw, Plus, Trash2, Save, FolderOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -8,8 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Slider } from '@/components/ui/slider';
-import { SavedTemplate, TextConfig, SavedOverlay, TextFieldConfig, DEFAULT_TEXT_FIELDS, FontWeight } from '@/types/imageGenerator';
+import { SavedTemplate, TextConfig, SavedOverlay, TextFieldConfig, DEFAULT_TEXT_FIELDS, FontWeight, OverlayPreset } from '@/types/imageGenerator';
 import { TemplateCanvas } from './TemplateCanvas';
+import { toast } from 'sonner';
 
 interface TemplateEditorProps {
   template: SavedTemplate | null;
@@ -237,6 +238,75 @@ export const TemplateEditor = ({
     [template, onUpdateTemplate]
   );
 
+  // Overlay Preset Management
+  const handleSaveAsPreset = useCallback(() => {
+    if (!template) return;
+    const currentOverlays = template.overlays || [];
+    if (currentOverlays.length === 0) {
+      toast.error('No overlays to save');
+      return;
+    }
+    
+    const presetName = prompt('Enter a name for this overlay preset:');
+    if (!presetName?.trim()) return;
+    
+    const newPreset: OverlayPreset = {
+      id: crypto.randomUUID(),
+      name: presetName.trim(),
+      overlays: JSON.parse(JSON.stringify(currentOverlays)), // Deep clone
+    };
+    
+    const existingPresets = template.overlayPresets || [];
+    onUpdateTemplate(template.id, {
+      overlayPresets: [...existingPresets, newPreset],
+      activePresetId: newPreset.id,
+    });
+    toast.success(`Preset "${presetName}" saved`);
+  }, [template, onUpdateTemplate]);
+
+  const handleLoadPreset = useCallback(
+    (presetId: string) => {
+      if (!template) return;
+      const presets = template.overlayPresets || [];
+      const preset = presets.find((p) => p.id === presetId);
+      if (!preset) return;
+      
+      onUpdateTemplate(template.id, {
+        overlays: JSON.parse(JSON.stringify(preset.overlays)), // Deep clone
+        activePresetId: presetId,
+      });
+      toast.success(`Loaded preset "${preset.name}"`);
+    },
+    [template, onUpdateTemplate]
+  );
+
+  const handleDeletePreset = useCallback(
+    (presetId: string) => {
+      if (!template) return;
+      const presets = template.overlayPresets || [];
+      const preset = presets.find((p) => p.id === presetId);
+      if (!preset) return;
+      
+      if (!confirm(`Delete preset "${preset.name}"?`)) return;
+      
+      const updatedPresets = presets.filter((p) => p.id !== presetId);
+      onUpdateTemplate(template.id, {
+        overlayPresets: updatedPresets,
+        activePresetId: template.activePresetId === presetId ? null : template.activePresetId,
+      });
+      toast.success(`Deleted preset "${preset.name}"`);
+    },
+    [template, onUpdateTemplate]
+  );
+
+  const handleClearOverlays = useCallback(() => {
+    if (!template) return;
+    onUpdateTemplate(template.id, { 
+      overlays: [],
+      activePresetId: null,
+    });
+  }, [template, onUpdateTemplate]);
+
   // Build preview text based on enabled fields
   const getPreviewText = useCallback(() => {
     if (!template) return sampleEventName;
@@ -344,19 +414,66 @@ export const TemplateEditor = ({
           <CardContent className="p-4 space-y-4">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Overlays</span>
-              <Button variant="outline" size="sm" asChild>
-                <label className="cursor-pointer">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Overlay
-                  <input
-                    type="file"
-                    accept="image/png,image/jpeg,image/webp"
-                    className="hidden"
-                    onChange={handleOverlayUpload}
-                  />
-                </label>
-              </Button>
+              <div className="flex items-center gap-2">
+                {(template.overlays || []).length > 0 && (
+                  <>
+                    <Button variant="outline" size="sm" onClick={handleSaveAsPreset}>
+                      <Save className="mr-2 h-4 w-4" />
+                      Save Preset
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={handleClearOverlays}>
+                      Clear All
+                    </Button>
+                  </>
+                )}
+                <Button variant="outline" size="sm" asChild>
+                  <label className="cursor-pointer">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Overlay
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      className="hidden"
+                      onChange={handleOverlayUpload}
+                    />
+                  </label>
+                </Button>
+              </div>
             </div>
+
+            {/* Saved Presets */}
+            {(template.overlayPresets || []).length > 0 && (
+              <div className="space-y-2">
+                <Label className="text-sm">Saved Presets</Label>
+                <div className="flex flex-wrap gap-2">
+                  {(template.overlayPresets || []).map((preset) => (
+                    <div
+                      key={preset.id}
+                      className={`flex items-center gap-1 px-3 py-1.5 rounded-md border text-sm transition-colors ${
+                        template.activePresetId === preset.id
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'bg-background hover:bg-muted border-border'
+                      }`}
+                    >
+                      <button
+                        onClick={() => handleLoadPreset(preset.id)}
+                        className="flex items-center gap-1"
+                      >
+                        <FolderOpen className="h-3 w-3" />
+                        {preset.name}
+                        <span className="text-xs opacity-70">({preset.overlays.length})</span>
+                      </button>
+                      <button
+                        onClick={() => handleDeletePreset(preset.id)}
+                        className="ml-1 opacity-50 hover:opacity-100"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {(template.overlays || []).length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-4">
