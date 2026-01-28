@@ -197,7 +197,8 @@ export const useImageGenerator = () => {
       
       // Draw bottom shadow gradient (if enabled) - AFTER event image so it's visible
       if (template.textConfig.bottomShadowEnabled) {
-        const gradientHeight = canvasHeight / 3;
+        const heightPercent = (template.textConfig.bottomShadowHeight ?? 33) / 100;
+        const gradientHeight = canvasHeight * heightPercent;
         const gradient = ctx.createLinearGradient(
           0, canvasHeight - gradientHeight,
           0, canvasHeight
