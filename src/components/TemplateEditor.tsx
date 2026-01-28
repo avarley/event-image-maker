@@ -1,5 +1,5 @@
-import { useCallback, useState } from 'react';
-import { Upload, Image as ImageIcon, RotateCcw, Plus, Trash2, Save, FolderOpen } from 'lucide-react';
+import { useCallback, useState, useMemo } from 'react';
+import { Upload, Image as ImageIcon, RotateCcw, Plus, Trash2, Save, FolderOpen, Type } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -8,10 +8,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Slider } from '@/components/ui/slider';
-import { SavedTemplate, TextConfig, SavedOverlay, TextFieldConfig, DEFAULT_TEXT_FIELDS, FontWeight, OverlayPreset } from '@/types/imageGenerator';
+import { SavedTemplate, TextConfig, SavedOverlay, TextFieldConfig, DEFAULT_TEXT_FIELDS, FontWeight, OverlayPreset, CustomFont } from '@/types/imageGenerator';
 import { TemplateCanvas } from './TemplateCanvas';
 import { ImportOverlaysDialog } from './ImportOverlaysDialog';
 import { compressImageFile, formatBytes, estimateDataUrlSize } from '@/utils/imageCompression';
+import { useCustomFonts, loadFontFile } from '@/hooks/useCustomFonts';
 import { toast } from 'sonner';
 
 interface TemplateEditorProps {
@@ -75,6 +76,16 @@ export const TemplateEditor = ({
 }: TemplateEditorProps) => {
   const [showSafeZone, setShowSafeZone] = useState(false);
   const [showEventImageOverlay, setShowEventImageOverlay] = useState(false);
+
+  // Load custom fonts for this template
+  useCustomFonts(template?.customFonts || []);
+
+  // Combine built-in fonts with custom fonts
+  const availableFonts = useMemo(() => {
+    const builtIn = FONT_FAMILIES.map(f => ({ name: f, isCustom: false }));
+    const custom = (template?.customFonts || []).map(f => ({ name: f.name, isCustom: true }));
+    return [...builtIn, ...custom];
+  }, [template?.customFonts]);
 
   const handleFileChange = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -342,6 +353,62 @@ export const TemplateEditor = ({
       overlays: [...(template.overlays || []), ...overlays],
     });
   }, [template, onUpdateTemplate]);
+
+  const handleFontUpload = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (!template) return;
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      try {
+        const { dataUrl, name, format } = await loadFontFile(file);
+        
+        const newFont: CustomFont = {
+          id: crypto.randomUUID(),
+          name,
+          dataUrl,
+          format,
+        };
+
+        const existingFonts = template.customFonts || [];
+        onUpdateTemplate(template.id, {
+          customFonts: [...existingFonts, newFont],
+          textConfig: {
+            ...template.textConfig,
+            fontFamily: name, // Auto-select the new font
+          },
+        });
+        
+        toast.success(`Added custom font: ${name}`);
+      } catch (error) {
+        console.error('Failed to load font:', error);
+        toast.error(error instanceof Error ? error.message : 'Failed to load font');
+      }
+      
+      e.target.value = '';
+    },
+    [template, onUpdateTemplate]
+  );
+
+  const handleDeleteFont = useCallback(
+    (fontId: string) => {
+      if (!template) return;
+      const font = template.customFonts?.find(f => f.id === fontId);
+      if (!font) return;
+      
+      const updatedFonts = (template.customFonts || []).filter(f => f.id !== fontId);
+      const updates: Partial<SavedTemplate> = { customFonts: updatedFonts };
+      
+      // Reset font to default if the deleted font was selected
+      if (template.textConfig.fontFamily === font.name) {
+        updates.textConfig = { ...template.textConfig, fontFamily: 'Roboto' };
+      }
+      
+      onUpdateTemplate(template.id, updates);
+      toast.success(`Removed font: ${font.name}`);
+    },
+    [template, onUpdateTemplate]
+  );
 
   // Build preview text based on enabled fields
   const getPreviewText = useCallback(() => {
@@ -853,7 +920,21 @@ export const TemplateEditor = ({
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="fontFamily">Font Family</Label>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="fontFamily">Font Family</Label>
+                      <Button variant="ghost" size="sm" asChild className="h-6 px-2">
+                        <label className="cursor-pointer">
+                          <Type className="h-3 w-3 mr-1" />
+                          Add
+                          <input
+                            type="file"
+                            accept=".ttf,.otf,.woff,.woff2"
+                            className="hidden"
+                            onChange={handleFontUpload}
+                          />
+                        </label>
+                      </Button>
+                    </div>
                     <Select
                       value={template.textConfig.fontFamily}
                       onValueChange={(value) => handleTextFieldChange('fontFamily', value)}
@@ -862,13 +943,47 @@ export const TemplateEditor = ({
                         <SelectValue placeholder="Select font" />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="__divider_builtin" disabled className="text-xs text-muted-foreground">
+                          Built-in Fonts
+                        </SelectItem>
                         {FONT_FAMILIES.map((font) => (
                           <SelectItem key={font} value={font} style={{ fontFamily: font }}>
                             {font}
                           </SelectItem>
                         ))}
+                        {(template.customFonts || []).length > 0 && (
+                          <>
+                            <SelectItem value="__divider_custom" disabled className="text-xs text-muted-foreground">
+                              Custom Fonts
+                            </SelectItem>
+                            {(template.customFonts || []).map((font) => (
+                              <SelectItem key={font.id} value={font.name} style={{ fontFamily: font.name }}>
+                                ✨ {font.name}
+                              </SelectItem>
+                            ))}
+                          </>
+                        )}
                       </SelectContent>
                     </Select>
+                    {/* Custom font management */}
+                    {(template.customFonts || []).length > 0 && (
+                      <div className="flex flex-wrap gap-1 pt-1">
+                        {(template.customFonts || []).map((font) => (
+                          <div
+                            key={font.id}
+                            className="flex items-center gap-1 px-2 py-0.5 rounded bg-muted text-xs"
+                          >
+                            <span className="truncate max-w-20">{font.name}</span>
+                            <button
+                              onClick={() => handleDeleteFont(font.id)}
+                              className="text-destructive hover:text-destructive/80"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-2">

@@ -103,8 +103,16 @@ export interface SavedTemplate {
   overlays: SavedOverlay[];
   overlayPresets?: OverlayPreset[];
   activePresetId?: string | null;
+  customFonts?: CustomFont[];
   createdAt: number;
   updatedAt: number;
+}
+
+export interface CustomFont {
+  id: string;
+  name: string;
+  dataUrl: string;
+  format: 'truetype' | 'opentype' | 'woff' | 'woff2';
 }
 
 export interface GeneratedImage {
