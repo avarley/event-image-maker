@@ -180,11 +180,11 @@ export const TemplateEditor = ({
 
       try {
         const originalSize = file.size;
-        // Use smaller max dimensions for overlays
+        // Aggressive compression for overlays
         const compressedDataUrl = await compressImageFile(file, {
-          maxWidth: 1024,
-          maxHeight: 1024,
-          quality: 0.8,
+          maxWidth: 512,
+          maxHeight: 512,
+          quality: 0.6,
         });
         const compressedSize = estimateDataUrlSize(compressedDataUrl);
         
