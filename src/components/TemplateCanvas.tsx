@@ -441,7 +441,7 @@ export const TemplateCanvas = ({
         <div
           className="absolute bottom-0 left-0 right-0 pointer-events-none"
           style={{
-            height: baseplateSize.height * scale / 3,
+            height: baseplateSize.height * scale * ((textConfig.bottomShadowHeight ?? 33) / 100),
             background: `linear-gradient(to bottom, transparent, rgba(0, 0, 0, ${textConfig.bottomShadowOpacity ?? 0.5}))`,
           }}
         />

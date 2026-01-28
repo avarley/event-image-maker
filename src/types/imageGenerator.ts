@@ -52,6 +52,7 @@ export interface TextConfig {
   fields: TextFieldConfig;
   bottomShadowEnabled?: boolean;
   bottomShadowOpacity?: number;
+  bottomShadowHeight?: number; // 0-100 percentage of canvas height
 }
 
 export interface OverlayConfig {

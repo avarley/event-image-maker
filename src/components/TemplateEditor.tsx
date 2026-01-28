@@ -649,21 +649,39 @@ export const TemplateEditor = ({
                   </div>
                   
                   {template.textConfig.bottomShadowEnabled && (
-                    <div className="space-y-2 pl-6 max-w-xs">
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="shadowOpacity" className="text-sm">Opacity</Label>
-                        <span className="text-sm text-muted-foreground">
-                          {Math.round((template.textConfig.bottomShadowOpacity ?? 0.5) * 100)}%
-                        </span>
+                    <div className="space-y-4 pl-6 max-w-xs">
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="shadowOpacity" className="text-sm">Opacity</Label>
+                          <span className="text-sm text-muted-foreground">
+                            {Math.round((template.textConfig.bottomShadowOpacity ?? 0.5) * 100)}%
+                          </span>
+                        </div>
+                        <Slider
+                          id="shadowOpacity"
+                          min={0}
+                          max={100}
+                          step={5}
+                          value={[Math.round((template.textConfig.bottomShadowOpacity ?? 0.5) * 100)]}
+                          onValueChange={([value]) => handleTextFieldChange('bottomShadowOpacity', value / 100)}
+                        />
                       </div>
-                      <Slider
-                        id="shadowOpacity"
-                        min={0}
-                        max={100}
-                        step={5}
-                        value={[Math.round((template.textConfig.bottomShadowOpacity ?? 0.5) * 100)]}
-                        onValueChange={([value]) => handleTextFieldChange('bottomShadowOpacity', value / 100)}
-                      />
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="shadowHeight" className="text-sm">Height</Label>
+                          <span className="text-sm text-muted-foreground">
+                            {template.textConfig.bottomShadowHeight ?? 33}%
+                          </span>
+                        </div>
+                        <Slider
+                          id="shadowHeight"
+                          min={10}
+                          max={100}
+                          step={5}
+                          value={[template.textConfig.bottomShadowHeight ?? 33]}
+                          onValueChange={([value]) => handleTextFieldChange('bottomShadowHeight', value)}
+                        />
+                      </div>
                     </div>
                   )}
                 </div>
