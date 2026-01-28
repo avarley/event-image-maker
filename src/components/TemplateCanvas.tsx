@@ -146,8 +146,8 @@ export const TemplateCanvas = ({
             o.id === activeOverlayId
               ? {
                   ...o,
-                  x: Math.max(0, Math.min(baseplateSize.width - o.width, Math.round(newX))),
-                  y: Math.max(0, Math.min(baseplateSize.height - o.height, Math.round(newY))),
+                  x: Math.round(newX),
+                  y: Math.round(newY),
                 }
               : o
           );
