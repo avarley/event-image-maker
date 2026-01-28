@@ -145,20 +145,26 @@ export const useImageGenerator = () => {
       const imageUrl = customImageUrl || event.EVENT_IMAGE_LARGE_URL;
       const eventImage = await loadImage(imageUrl);
       
-      // Calculate 4:5 safe zone width (visible area when cropped to portrait)
-      const portrait45Width = canvasHeight * (4 / 5);
-      const safeZoneWidth = Math.min(canvasWidth, portrait45Width);
-      
-      // Event image spans 95% of the safe zone width
-      const targetWidth = safeZoneWidth * 0.95;
+      // Cover mode: fill entire canvas while maintaining aspect ratio (crops if needed)
       const eventAspect = eventImage.width / eventImage.height;
+      const canvasAspect = canvasWidth / canvasHeight;
       
-      const drawWidth = targetWidth;
-      const drawHeight = drawWidth / eventAspect;
+      let drawWidth: number;
+      let drawHeight: number;
       
-      // Center the event image horizontally, move up 100px from center
+      if (eventAspect > canvasAspect) {
+        // Image is wider than canvas - match height, crop sides
+        drawHeight = canvasHeight;
+        drawWidth = drawHeight * eventAspect;
+      } else {
+        // Image is taller than canvas - match width, crop top/bottom
+        drawWidth = canvasWidth;
+        drawHeight = drawWidth / eventAspect;
+      }
+      
+      // Center the image (cropped parts extend beyond canvas)
       const drawX = (canvasWidth - drawWidth) / 2;
-      const drawY = (canvasHeight - drawHeight) / 2 - 100;
+      const drawY = (canvasHeight - drawHeight) / 2;
       
       // Draw overlays BELOW event image
       const belowOverlays = template.overlays.filter(o => o.layer === 'below');
