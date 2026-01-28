@@ -42,6 +42,11 @@ export const TemplateCanvas = ({
   const [overlayDragOffset, setOverlayDragOffset] = useState({ x: 0, y: 0 });
   const [initialOverlaySize, setInitialOverlaySize] = useState({ width: 0, height: 0 });
   const [initialMousePos, setInitialMousePos] = useState({ x: 0, y: 0 });
+  
+  // Snapping state
+  const [snappedToX, setSnappedToX] = useState(false);
+  const [snappedToY, setSnappedToY] = useState(false);
+  const SNAP_THRESHOLD = 10; // pixels
 
   // Load baseplate dimensions
   useEffect(() => {
@@ -97,8 +102,28 @@ export const TemplateCanvas = ({
 
       // Handle text dragging
       if (isDraggingText) {
-        const x = mouseX - dragOffset.x;
-        const y = mouseY - dragOffset.y;
+        let x = mouseX - dragOffset.x;
+        let y = mouseY - dragOffset.y;
+        
+        // Calculate center points
+        const centerX = baseplateSize.width / 2;
+        const centerY = baseplateSize.height / 2;
+        
+        // Snap to center X
+        if (Math.abs(x - centerX) < SNAP_THRESHOLD) {
+          x = centerX;
+          setSnappedToX(true);
+        } else {
+          setSnappedToX(false);
+        }
+        
+        // Snap to center Y
+        if (Math.abs(y - centerY) < SNAP_THRESHOLD) {
+          y = centerY;
+          setSnappedToY(true);
+        } else {
+          setSnappedToY(false);
+        }
 
         onTextConfigChange({
           ...textConfig,
@@ -194,6 +219,8 @@ export const TemplateCanvas = ({
     setActiveOverlayId(null);
     setOverlayAction(null);
     setResizeCorner(null);
+    setSnappedToX(false);
+    setSnappedToY(false);
   }, []);
 
   const handleOverlayMouseDown = useCallback(
@@ -384,6 +411,30 @@ export const TemplateCanvas = ({
         className="absolute inset-0 w-full h-full pointer-events-none"
         draggable={false}
       />
+
+      {/* Center guidelines - always visible when dragging */}
+      {isDraggingText && baseplateSize.width > 0 && (
+        <>
+          {/* Vertical center line */}
+          <div
+            className={`absolute top-0 bottom-0 w-px pointer-events-none transition-colors ${
+              snappedToX ? 'bg-yellow-400' : 'bg-yellow-400/50'
+            }`}
+            style={{
+              left: (baseplateSize.width / 2) * scale,
+            }}
+          />
+          {/* Horizontal center line */}
+          <div
+            className={`absolute left-0 right-0 h-px pointer-events-none transition-colors ${
+              snappedToY ? 'bg-yellow-400' : 'bg-yellow-400/50'
+            }`}
+            style={{
+              top: (baseplateSize.height / 2) * scale,
+            }}
+          />
+        </>
+      )}
 
       {/* Bottom shadow gradient preview */}
       {textConfig.bottomShadowEnabled && (
