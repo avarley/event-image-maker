@@ -182,6 +182,11 @@ export const TemplateCanvas = ({
             newY = overlay.y + (initialOverlaySize.height - newHeight);
           }
 
+          // Clamp position to keep overlay visible on canvas (at least 50px visible)
+          const minVisible = 50;
+          newX = Math.max(-newWidth + minVisible, Math.min(baseplateSize.width - minVisible, newX));
+          newY = Math.max(-newHeight + minVisible, Math.min(baseplateSize.height - minVisible, newY));
+
           const updatedOverlays = overlays.map((o) =>
             o.id === activeOverlayId
               ? {
