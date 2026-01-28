@@ -169,6 +169,8 @@ const Index = () => {
                   height: overlay.height,
                   layer: overlay.layer,
                   rotation: overlay.rotation,
+                  flipHorizontal: overlay.flipHorizontal,
+                  flipVertical: overlay.flipVertical,
                 });
               };
               overlayImg.onerror = () => resolveOverlay(null);
