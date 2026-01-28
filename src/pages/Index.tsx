@@ -161,6 +161,7 @@ const Index = () => {
               overlayImg.onload = () => {
                 resolveOverlay({
                   id: overlay.id,
+                  name: overlay.name || `Overlay`,
                   image: overlayImg,
                   x: overlay.x,
                   y: overlay.y,

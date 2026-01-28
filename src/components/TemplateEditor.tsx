@@ -186,8 +186,10 @@ export const TemplateEditor = ({
           const x = Math.floor((baseplateWidth - width) / 2);
           const y = 100;
           
+          const existingOverlays = template.overlays || [];
           const newOverlay: SavedOverlay = {
             id: crypto.randomUUID(),
+            name: `Overlay ${existingOverlays.length + 1}`,
             dataUrl,
             x,
             y,
@@ -481,19 +483,26 @@ export const TemplateEditor = ({
               </p>
             ) : (
               <div className="space-y-2">
-                {(template.overlays || []).map((overlay, index) => (
+                {(template.overlays || []).map((overlay) => (
                   <div
                     key={overlay.id}
                     className="flex items-center gap-3 p-2 border rounded-lg bg-background"
                   >
                     <img
                       src={overlay.dataUrl}
-                      alt={`Overlay ${index + 1}`}
+                      alt={overlay.name}
                       className="w-12 h-12 object-contain rounded border bg-muted"
                     />
-                    <span className="text-sm flex-1 truncate">
-                      Overlay {index + 1}
-                    </span>
+                    <Input
+                      value={overlay.name}
+                      onChange={(e) => {
+                        const updatedOverlays = (template.overlays || []).map((o) =>
+                          o.id === overlay.id ? { ...o, name: e.target.value } : o
+                        );
+                        onUpdateTemplate(template.id, { overlays: updatedOverlays });
+                      }}
+                      className="flex-1 h-8 text-sm"
+                    />
                     <Select
                       value={overlay.layer}
                       onValueChange={(value) =>
