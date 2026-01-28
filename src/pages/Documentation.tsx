@@ -1,21 +1,65 @@
+import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Layers, Type, Image, Database, Palette, Code2, Lightbulb, Settings } from 'lucide-react';
+import { ArrowLeft, Layers, Type, Image, Database, Palette, Code2, Lightbulb, Settings, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import html2pdf from 'html2pdf.js';
 
 const Documentation = () => {
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  const handleDownloadPDF = async () => {
+    if (!contentRef.current) return;
+    
+    setIsGenerating(true);
+    
+    const options = {
+      margin: [10, 10, 10, 10] as [number, number, number, number],
+      filename: 'bulk-image-generator-documentation.pdf',
+      image: { type: 'jpeg' as const, quality: 0.98 },
+      html2canvas: { 
+        scale: 2,
+        useCORS: true,
+        letterRendering: true
+      },
+      jsPDF: { 
+        unit: 'mm' as const, 
+        format: 'a4' as const, 
+        orientation: 'portrait' as const 
+      },
+      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+    };
+
+    try {
+      await html2pdf().set(options).from(contentRef.current).save();
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="border-b bg-muted/30">
         <div className="max-w-4xl mx-auto px-6 py-8">
-          <Button variant="ghost" asChild className="mb-4">
-            <Link to="/">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to App
-            </Link>
-          </Button>
+          <div className="flex justify-between items-start">
+            <Button variant="ghost" asChild className="mb-4">
+              <Link to="/">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to App
+              </Link>
+            </Button>
+            <Button 
+              onClick={handleDownloadPDF} 
+              disabled={isGenerating}
+              variant="outline"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              {isGenerating ? 'Generating...' : 'Download PDF'}
+            </Button>
+          </div>
           <h1 className="text-4xl font-bold mb-2">Bulk Image Generator</h1>
           <p className="text-xl text-muted-foreground">
             Technical Documentation & Architecture Guide
@@ -23,7 +67,7 @@ const Documentation = () => {
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-6 py-8 space-y-8">
+      <div ref={contentRef} className="max-w-4xl mx-auto px-6 py-8 space-y-8">
         {/* Core Concept */}
         <section>
           <Card>
