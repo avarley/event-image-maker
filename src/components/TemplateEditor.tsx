@@ -607,7 +607,7 @@ export const TemplateEditor = ({
                   <span className="text-sm font-medium">Display Fields</span>
                   <div className="space-y-4">
                     {/* Event Name */}
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-4 flex-wrap">
                       <div className="flex items-center gap-2 min-w-32">
                         <Switch
                           id="showEventName"
@@ -618,6 +618,21 @@ export const TemplateEditor = ({
                       </div>
                       {textFields.showEventName && (
                         <>
+                          <Select
+                            value={textFields.eventNameFontFamily || 'aktiv-grotesk-condensed'}
+                            onValueChange={(value) => handleFieldToggle('eventNameFontFamily', value)}
+                          >
+                            <SelectTrigger className="w-44">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {FONT_FAMILIES.map((font) => (
+                                <SelectItem key={font} value={font} style={{ fontFamily: font }}>
+                                  {font}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                           <Select
                             value={textFields.eventNameFontWeight || '700'}
                             onValueChange={(value) => handleFieldToggle('eventNameFontWeight', value)}
@@ -644,7 +659,7 @@ export const TemplateEditor = ({
                     </div>
                     
                     {/* Date */}
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-4 flex-wrap">
                       <div className="flex items-center gap-2 min-w-32">
                         <Switch
                           id="showDate"
@@ -654,24 +669,41 @@ export const TemplateEditor = ({
                         <Label htmlFor="showDate" className="text-sm">Date</Label>
                       </div>
                       {textFields.showDate && (
-                        <Select
-                          value={textFields.dateFontWeight || '700'}
-                          onValueChange={(value) => handleFieldToggle('dateFontWeight', value)}
-                        >
-                          <SelectTrigger className="w-28">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {FONT_WEIGHTS.map((fw) => (
-                              <SelectItem key={fw.value} value={fw.value}>{fw.label}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <>
+                          <Select
+                            value={textFields.dateFontFamily || 'aktiv-grotesk-condensed'}
+                            onValueChange={(value) => handleFieldToggle('dateFontFamily', value)}
+                          >
+                            <SelectTrigger className="w-44">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {FONT_FAMILIES.map((font) => (
+                                <SelectItem key={font} value={font} style={{ fontFamily: font }}>
+                                  {font}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Select
+                            value={textFields.dateFontWeight || '700'}
+                            onValueChange={(value) => handleFieldToggle('dateFontWeight', value)}
+                          >
+                            <SelectTrigger className="w-28">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {FONT_WEIGHTS.map((fw) => (
+                                <SelectItem key={fw.value} value={fw.value}>{fw.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </>
                       )}
                     </div>
                     
                     {/* Venue */}
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-4 flex-wrap">
                       <div className="flex items-center gap-2 min-w-32">
                         <Switch
                           id="showVenue"
@@ -698,7 +730,7 @@ export const TemplateEditor = ({
                     </div>
                     
                     {/* Location */}
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-4 flex-wrap">
                       <div className="flex items-center gap-2 min-w-32">
                         <Switch
                           id="showLocation"
@@ -708,19 +740,36 @@ export const TemplateEditor = ({
                         <Label htmlFor="showLocation" className="text-sm">Location</Label>
                       </div>
                       {(textFields.showVenue || textFields.showLocation) && (
-                        <Select
-                          value={textFields.venueLocationFontWeight || '700'}
-                          onValueChange={(value) => handleFieldToggle('venueLocationFontWeight', value)}
-                        >
-                          <SelectTrigger className="w-28">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {FONT_WEIGHTS.map((fw) => (
-                              <SelectItem key={fw.value} value={fw.value}>{fw.label}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <>
+                          <Select
+                            value={textFields.venueLocationFontFamily || 'aktiv-grotesk-condensed'}
+                            onValueChange={(value) => handleFieldToggle('venueLocationFontFamily', value)}
+                          >
+                            <SelectTrigger className="w-44">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {FONT_FAMILIES.map((font) => (
+                                <SelectItem key={font} value={font} style={{ fontFamily: font }}>
+                                  {font}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Select
+                            value={textFields.venueLocationFontWeight || '700'}
+                            onValueChange={(value) => handleFieldToggle('venueLocationFontWeight', value)}
+                          >
+                            <SelectTrigger className="w-28">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {FONT_WEIGHTS.map((fw) => (
+                                <SelectItem key={fw.value} value={fw.value}>{fw.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </>
                       )}
                       {(textFields.showVenue && textFields.showLocation) && (
                         <span className="text-xs text-muted-foreground">(shared with Venue)</span>
@@ -853,26 +902,7 @@ export const TemplateEditor = ({
                   )}
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="fontFamily">Font Family</Label>
-                    <Select
-                      value={template.textConfig.fontFamily}
-                      onValueChange={(value) => handleTextFieldChange('fontFamily', value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select font" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {FONT_FAMILIES.map((font) => (
-                          <SelectItem key={font} value={font} style={{ fontFamily: font }}>
-                            {font}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="fontSize">Font Size (px)</Label>
                     <Input

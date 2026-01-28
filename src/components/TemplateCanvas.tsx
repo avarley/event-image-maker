@@ -558,22 +558,27 @@ export const TemplateCanvas = ({
                 ? textConfig.eventNameFontSize 
                 : textConfig.fontSize;
               
-              // Determine font weight based on which line this is
+              // Determine font weight and family based on which line this is
               let fontWeight: FontWeight = '700';
+              let fontFamily: string = textConfig.fontFamily;
+              
               if (index === 0 && fields.showEventName) {
                 fontWeight = fields.eventNameFontWeight || '700';
+                fontFamily = fields.eventNameFontFamily || textConfig.fontFamily;
               } else if (index === 1 && fields.showDate) {
                 fontWeight = fields.dateFontWeight || '700';
+                fontFamily = fields.dateFontFamily || textConfig.fontFamily;
               } else if (index >= 1) {
                 // Venue/Location line
                 fontWeight = fields.venueLocationFontWeight || '700';
+                fontFamily = fields.venueLocationFontFamily || textConfig.fontFamily;
               }
               
               return (
                 <div
                   key={index}
                   style={{
-                    fontFamily: textConfig.fontFamily,
+                    fontFamily: fontFamily,
                     fontSize: fontSize * scale,
                     fontWeight: parseInt(fontWeight),
                     color: textConfig.color,

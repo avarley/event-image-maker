@@ -79,10 +79,11 @@ export const useImageGenerator = () => {
   interface TextLine {
     text: string;
     fontWeight: FontWeight;
+    fontFamily: string;
     isEventName: boolean;
   }
 
-  const buildTextLines = useCallback((event: EventData, fields: TextFieldConfig): TextLine[] => {
+  const buildTextLines = useCallback((event: EventData, fields: TextFieldConfig, defaultFontFamily: string): TextLine[] => {
     const lines: TextLine[] = [];
     
     if (fields.showEventName) {
@@ -92,6 +93,7 @@ export const useImageGenerator = () => {
       lines.push({
         text: eventName,
         fontWeight: fields.eventNameFontWeight || '700',
+        fontFamily: fields.eventNameFontFamily || defaultFontFamily,
         isEventName: true,
       });
     }
@@ -99,6 +101,7 @@ export const useImageGenerator = () => {
       lines.push({
         text: formatDate(event.STARTS_AT, fields),
         fontWeight: fields.dateFontWeight || '700',
+        fontFamily: fields.dateFontFamily || defaultFontFamily,
         isEventName: false,
       });
     }
@@ -111,18 +114,21 @@ export const useImageGenerator = () => {
       lines.push({
         text: `${venuePart}, ${locationPart}`,
         fontWeight: fields.venueLocationFontWeight || '700',
+        fontFamily: fields.venueLocationFontFamily || defaultFontFamily,
         isEventName: false,
       });
     } else if (venuePart) {
       lines.push({
         text: venuePart,
         fontWeight: fields.venueLocationFontWeight || '700',
+        fontFamily: fields.venueLocationFontFamily || defaultFontFamily,
         isEventName: false,
       });
     } else if (locationPart) {
       lines.push({
         text: locationPart,
         fontWeight: fields.venueLocationFontWeight || '700',
+        fontFamily: fields.venueLocationFontFamily || defaultFontFamily,
         isEventName: false,
       });
     }
@@ -239,7 +245,7 @@ export const useImageGenerator = () => {
       const { textConfig } = template;
       if (template.textEnabled !== false) {
         const fields = textConfig.fields || DEFAULT_TEXT_FIELDS;
-        const textLines = buildTextLines(event, fields);
+        const textLines = buildTextLines(event, fields, textConfig.fontFamily);
         
         ctx.fillStyle = textConfig.color;
         ctx.textAlign = textConfig.textAlign;
@@ -254,7 +260,7 @@ export const useImageGenerator = () => {
             ? textConfig.eventNameFontSize
             : textConfig.fontSize;
           
-          ctx.font = `${lineData.fontWeight} ${currentFontSize}px ${textConfig.fontFamily}`;
+          ctx.font = `${lineData.fontWeight} ${currentFontSize}px ${lineData.fontFamily}`;
           const lineHeightMultiplier = textConfig.lineHeight ?? 1.2;
           const lineHeight = currentFontSize * lineHeightMultiplier;
           
