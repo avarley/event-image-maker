@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { EventData, TemplateConfig, GeneratedImage, TextFieldConfig, DEFAULT_TEXT_FIELDS } from '@/types/imageGenerator';
+import { EventData, TemplateConfig, GeneratedImage, TextFieldConfig, DEFAULT_TEXT_FIELDS, FontWeight } from '@/types/imageGenerator';
 import { format } from 'date-fns';
 
 export const useImageGenerator = () => {
@@ -76,14 +76,28 @@ export const useImageGenerator = () => {
     }
   }, []);
 
-  const buildTextLines = useCallback((event: EventData, fields: TextFieldConfig): string[] => {
-    const lines: string[] = [];
+  interface TextLine {
+    text: string;
+    fontWeight: FontWeight;
+    isEventName: boolean;
+  }
+
+  const buildTextLines = useCallback((event: EventData, fields: TextFieldConfig): TextLine[] => {
+    const lines: TextLine[] = [];
     
     if (fields.showEventName) {
-      lines.push(event.EVENT_NAME);
+      lines.push({
+        text: event.EVENT_NAME,
+        fontWeight: fields.eventNameFontWeight || '700',
+        isEventName: true,
+      });
     }
     if (fields.showDate && event.STARTS_AT) {
-      lines.push(formatDate(event.STARTS_AT, fields));
+      lines.push({
+        text: formatDate(event.STARTS_AT, fields),
+        fontWeight: fields.dateFontWeight || '700',
+        isEventName: false,
+      });
     }
     
     // Concatenate venue and location on the same line
@@ -91,11 +105,23 @@ export const useImageGenerator = () => {
     const locationPart = fields.showLocation && event.CITY_NAME ? formatLocation(event, fields.locationFormat) : '';
     
     if (venuePart && locationPart) {
-      lines.push(`${venuePart}, ${locationPart}`);
+      lines.push({
+        text: `${venuePart}, ${locationPart}`,
+        fontWeight: fields.venueLocationFontWeight || '700',
+        isEventName: false,
+      });
     } else if (venuePart) {
-      lines.push(venuePart);
+      lines.push({
+        text: venuePart,
+        fontWeight: fields.venueLocationFontWeight || '700',
+        isEventName: false,
+      });
     } else if (locationPart) {
-      lines.push(locationPart);
+      lines.push({
+        text: locationPart,
+        fontWeight: fields.venueLocationFontWeight || '700',
+        isEventName: false,
+      });
     }
     
     return lines;
@@ -192,19 +218,18 @@ export const useImageGenerator = () => {
         ctx.textBaseline = 'top';
         
         let currentY = textConfig.y;
-        let isFirstLine = true;
         
         // Draw each text line with word wrapping
-        for (const lineText of textLines) {
-          // Use event name font size for first line if it's the event name
-          const currentFontSize = (isFirstLine && fields.showEventName && textConfig.eventNameFontSize)
+        for (const lineData of textLines) {
+          // Use event name font size for event name line
+          const currentFontSize = (lineData.isEventName && textConfig.eventNameFontSize)
             ? textConfig.eventNameFontSize
             : textConfig.fontSize;
           
-          ctx.font = `bold ${currentFontSize}px ${textConfig.fontFamily}`;
+          ctx.font = `${lineData.fontWeight} ${currentFontSize}px ${textConfig.fontFamily}`;
           const lineHeight = currentFontSize * 1.2;
           
-          const words = lineText.split(' ');
+          const words = lineData.text.split(' ');
           let line = '';
           
           for (let i = 0; i < words.length; i++) {
@@ -221,7 +246,6 @@ export const useImageGenerator = () => {
           }
           ctx.fillText(line.trim(), textConfig.x, currentY);
           currentY += lineHeight;
-          isFirstLine = false;
         }
       }
       
