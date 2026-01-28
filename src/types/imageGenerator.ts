@@ -49,6 +49,7 @@ export interface TextConfig {
   fontSize: number;
   eventNameFontSize?: number;
   lineHeight?: number; // Multiplier for line height (e.g., 1.2 = 120%)
+  letterSpacing?: number; // Letter spacing in pixels (can be negative)
   color: string;
   x: number;
   y: number;

@@ -933,6 +933,23 @@ export const TemplateEditor = ({
                   </div>
 
                   <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="letterSpacing">Letter Spacing</Label>
+                      <span className="text-sm text-muted-foreground">
+                        {template.textConfig.letterSpacing ?? 0}px
+                      </span>
+                    </div>
+                    <Slider
+                      id="letterSpacing"
+                      min={-10}
+                      max={20}
+                      step={1}
+                      value={[template.textConfig.letterSpacing ?? 0]}
+                      onValueChange={([value]) => handleTextFieldChange('letterSpacing', value)}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
                     <Label htmlFor="color">Text Color</Label>
                     <div className="flex gap-2">
                       <Input

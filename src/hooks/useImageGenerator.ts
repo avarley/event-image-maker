@@ -261,6 +261,7 @@ export const useImageGenerator = () => {
             : textConfig.fontSize;
           
           ctx.font = `${lineData.fontWeight} ${currentFontSize}px ${lineData.fontFamily}`;
+          ctx.letterSpacing = `${textConfig.letterSpacing ?? 0}px`;
           const lineHeightMultiplier = textConfig.lineHeight ?? 1.2;
           const lineHeight = currentFontSize * lineHeightMultiplier;
           
