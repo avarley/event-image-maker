@@ -40,6 +40,10 @@ export interface TextFieldConfig {
   eventNameFontFamily?: string;
   dateFontFamily?: string;
   venueLocationFontFamily?: string;
+  // Per-field letter spacing
+  eventNameLetterSpacing?: number;
+  dateLetterSpacing?: number;
+  venueLocationLetterSpacing?: number;
   // Event name styling
   eventNameUppercase?: boolean;
 }
@@ -49,7 +53,6 @@ export interface TextConfig {
   fontSize: number;
   eventNameFontSize?: number;
   lineHeight?: number; // Multiplier for line height (e.g., 1.2 = 120%)
-  letterSpacing?: number; // Letter spacing in pixels (can be negative)
   color: string;
   x: number;
   y: number;

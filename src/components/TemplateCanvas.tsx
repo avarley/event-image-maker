@@ -558,20 +558,24 @@ export const TemplateCanvas = ({
                 ? textConfig.eventNameFontSize 
                 : textConfig.fontSize;
               
-              // Determine font weight and family based on which line this is
+              // Determine font weight, family, and letter spacing based on which line this is
               let fontWeight: FontWeight = '700';
               let fontFamily: string = textConfig.fontFamily;
+              let letterSpacing: number = 0;
               
               if (index === 0 && fields.showEventName) {
                 fontWeight = fields.eventNameFontWeight || '700';
                 fontFamily = fields.eventNameFontFamily || textConfig.fontFamily;
+                letterSpacing = fields.eventNameLetterSpacing ?? 0;
               } else if (index === 1 && fields.showDate) {
                 fontWeight = fields.dateFontWeight || '700';
                 fontFamily = fields.dateFontFamily || textConfig.fontFamily;
+                letterSpacing = fields.dateLetterSpacing ?? 0;
               } else if (index >= 1) {
                 // Venue/Location line
                 fontWeight = fields.venueLocationFontWeight || '700';
                 fontFamily = fields.venueLocationFontFamily || textConfig.fontFamily;
+                letterSpacing = fields.venueLocationLetterSpacing ?? 0;
               }
               
               return (
@@ -584,7 +588,7 @@ export const TemplateCanvas = ({
                     color: textConfig.color,
                     textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
                     lineHeight: textConfig.lineHeight ?? 1.2,
-                    letterSpacing: `${textConfig.letterSpacing ?? 0}px`,
+                    letterSpacing: `${letterSpacing}px`,
                   }}
                 >
                   {line}

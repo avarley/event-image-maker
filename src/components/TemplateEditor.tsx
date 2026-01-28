@@ -138,7 +138,7 @@ export const TemplateEditor = ({
   );
 
   const handleFieldToggle = useCallback(
-    (fieldKey: keyof TextFieldConfig, value: boolean | string) => {
+    (fieldKey: keyof TextFieldConfig, value: boolean | string | number) => {
       if (!template) return;
       const currentFields = template.textConfig.fields || DEFAULT_TEXT_FIELDS;
       onUpdateTemplate(template.id, {
@@ -654,6 +654,17 @@ export const TemplateEditor = ({
                             />
                             <Label htmlFor="eventNameUppercase" className="text-sm">UPPERCASE</Label>
                           </div>
+                          <div className="flex items-center gap-2">
+                            <Label className="text-xs text-muted-foreground">Spacing:</Label>
+                            <Input
+                              type="number"
+                              min={-10}
+                              max={20}
+                              value={textFields.eventNameLetterSpacing ?? 0}
+                              onChange={(e) => handleFieldToggle('eventNameLetterSpacing', parseInt(e.target.value) || 0)}
+                              className="w-16 h-7 text-xs"
+                            />
+                          </div>
                         </>
                       )}
                     </div>
@@ -698,6 +709,17 @@ export const TemplateEditor = ({
                               ))}
                             </SelectContent>
                           </Select>
+                          <div className="flex items-center gap-2">
+                            <Label className="text-xs text-muted-foreground">Spacing:</Label>
+                            <Input
+                              type="number"
+                              min={-10}
+                              max={20}
+                              value={textFields.dateLetterSpacing ?? 0}
+                              onChange={(e) => handleFieldToggle('dateLetterSpacing', parseInt(e.target.value) || 0)}
+                              className="w-16 h-7 text-xs"
+                            />
+                          </div>
                         </>
                       )}
                     </div>
@@ -769,6 +791,17 @@ export const TemplateEditor = ({
                               ))}
                             </SelectContent>
                           </Select>
+                          <div className="flex items-center gap-2">
+                            <Label className="text-xs text-muted-foreground">Spacing:</Label>
+                            <Input
+                              type="number"
+                              min={-10}
+                              max={20}
+                              value={textFields.venueLocationLetterSpacing ?? 0}
+                              onChange={(e) => handleFieldToggle('venueLocationLetterSpacing', parseInt(e.target.value) || 0)}
+                              className="w-16 h-7 text-xs"
+                            />
+                          </div>
                         </>
                       )}
                       {(textFields.showVenue && textFields.showLocation) && (
@@ -932,22 +965,6 @@ export const TemplateEditor = ({
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="letterSpacing">Letter Spacing</Label>
-                      <span className="text-sm text-muted-foreground">
-                        {template.textConfig.letterSpacing ?? 0}px
-                      </span>
-                    </div>
-                    <Slider
-                      id="letterSpacing"
-                      min={-10}
-                      max={20}
-                      step={1}
-                      value={[template.textConfig.letterSpacing ?? 0]}
-                      onValueChange={([value]) => handleTextFieldChange('letterSpacing', value)}
-                    />
-                  </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="color">Text Color</Label>

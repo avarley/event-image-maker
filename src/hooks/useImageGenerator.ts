@@ -80,6 +80,7 @@ export const useImageGenerator = () => {
     text: string;
     fontWeight: FontWeight;
     fontFamily: string;
+    letterSpacing: number;
     isEventName: boolean;
   }
 
@@ -94,6 +95,7 @@ export const useImageGenerator = () => {
         text: eventName,
         fontWeight: fields.eventNameFontWeight || '700',
         fontFamily: fields.eventNameFontFamily || defaultFontFamily,
+        letterSpacing: fields.eventNameLetterSpacing ?? 0,
         isEventName: true,
       });
     }
@@ -102,6 +104,7 @@ export const useImageGenerator = () => {
         text: formatDate(event.STARTS_AT, fields),
         fontWeight: fields.dateFontWeight || '700',
         fontFamily: fields.dateFontFamily || defaultFontFamily,
+        letterSpacing: fields.dateLetterSpacing ?? 0,
         isEventName: false,
       });
     }
@@ -115,6 +118,7 @@ export const useImageGenerator = () => {
         text: `${venuePart}, ${locationPart}`,
         fontWeight: fields.venueLocationFontWeight || '700',
         fontFamily: fields.venueLocationFontFamily || defaultFontFamily,
+        letterSpacing: fields.venueLocationLetterSpacing ?? 0,
         isEventName: false,
       });
     } else if (venuePart) {
@@ -122,6 +126,7 @@ export const useImageGenerator = () => {
         text: venuePart,
         fontWeight: fields.venueLocationFontWeight || '700',
         fontFamily: fields.venueLocationFontFamily || defaultFontFamily,
+        letterSpacing: fields.venueLocationLetterSpacing ?? 0,
         isEventName: false,
       });
     } else if (locationPart) {
@@ -129,6 +134,7 @@ export const useImageGenerator = () => {
         text: locationPart,
         fontWeight: fields.venueLocationFontWeight || '700',
         fontFamily: fields.venueLocationFontFamily || defaultFontFamily,
+        letterSpacing: fields.venueLocationLetterSpacing ?? 0,
         isEventName: false,
       });
     }
@@ -261,7 +267,7 @@ export const useImageGenerator = () => {
             : textConfig.fontSize;
           
           ctx.font = `${lineData.fontWeight} ${currentFontSize}px ${lineData.fontFamily}`;
-          ctx.letterSpacing = `${textConfig.letterSpacing ?? 0}px`;
+          ctx.letterSpacing = `${lineData.letterSpacing}px`;
           const lineHeightMultiplier = textConfig.lineHeight ?? 1.2;
           const lineHeight = currentFontSize * lineHeightMultiplier;
           
