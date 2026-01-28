@@ -10,10 +10,12 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Slider } from '@/components/ui/slider';
 import { SavedTemplate, TextConfig, SavedOverlay, TextFieldConfig, DEFAULT_TEXT_FIELDS, FontWeight, OverlayPreset } from '@/types/imageGenerator';
 import { TemplateCanvas } from './TemplateCanvas';
+import { ImportOverlaysDialog } from './ImportOverlaysDialog';
 import { toast } from 'sonner';
 
 interface TemplateEditorProps {
   template: SavedTemplate | null;
+  allTemplates: SavedTemplate[];
   onUpdateTemplate: (id: string, updates: Partial<SavedTemplate>) => void;
   sampleEventName?: string;
   eventImageAspectRatio?: number;
@@ -65,6 +67,7 @@ const SAMPLE_EVENT = {
 
 export const TemplateEditor = ({
   template,
+  allTemplates,
   onUpdateTemplate,
   sampleEventName = 'Sample Event Name',
   eventImageAspectRatio,
@@ -309,6 +312,13 @@ export const TemplateEditor = ({
     });
   }, [template, onUpdateTemplate]);
 
+  const handleImportOverlays = useCallback((overlays: SavedOverlay[]) => {
+    if (!template) return;
+    onUpdateTemplate(template.id, {
+      overlays: [...(template.overlays || []), ...overlays],
+    });
+  }, [template, onUpdateTemplate]);
+
   // Build preview text based on enabled fields
   const getPreviewText = useCallback(() => {
     if (!template) return sampleEventName;
@@ -417,6 +427,11 @@ export const TemplateEditor = ({
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Overlays</span>
               <div className="flex items-center gap-2">
+                <ImportOverlaysDialog
+                  currentTemplate={template}
+                  allTemplates={allTemplates}
+                  onImportOverlays={handleImportOverlays}
+                />
                 {(template.overlays || []).length > 0 && (
                   <>
                     <Button variant="outline" size="sm" onClick={handleSaveAsPreset}>
