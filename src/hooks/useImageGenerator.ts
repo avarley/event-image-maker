@@ -86,8 +86,11 @@ export const useImageGenerator = () => {
     const lines: TextLine[] = [];
     
     if (fields.showEventName) {
+      const eventName = fields.eventNameUppercase 
+        ? event.EVENT_NAME.toUpperCase() 
+        : event.EVENT_NAME;
       lines.push({
-        text: event.EVENT_NAME,
+        text: eventName,
         fontWeight: fields.eventNameFontWeight || '700',
         isEventName: true,
       });

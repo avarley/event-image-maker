@@ -450,19 +450,29 @@ export const TemplateEditor = ({
                         <Label htmlFor="showEventName" className="text-sm">Event Name</Label>
                       </div>
                       {textFields.showEventName && (
-                        <Select
-                          value={textFields.eventNameFontWeight || '700'}
-                          onValueChange={(value) => handleFieldToggle('eventNameFontWeight', value)}
-                        >
-                          <SelectTrigger className="w-28">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {FONT_WEIGHTS.map((fw) => (
-                              <SelectItem key={fw.value} value={fw.value}>{fw.label}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <>
+                          <Select
+                            value={textFields.eventNameFontWeight || '700'}
+                            onValueChange={(value) => handleFieldToggle('eventNameFontWeight', value)}
+                          >
+                            <SelectTrigger className="w-28">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {FONT_WEIGHTS.map((fw) => (
+                                <SelectItem key={fw.value} value={fw.value}>{fw.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <div className="flex items-center gap-2">
+                            <Checkbox
+                              id="eventNameUppercase"
+                              checked={textFields.eventNameUppercase ?? false}
+                              onCheckedChange={(checked) => handleFieldToggle('eventNameUppercase', checked === true)}
+                            />
+                            <Label htmlFor="eventNameUppercase" className="text-sm">UPPERCASE</Label>
+                          </div>
+                        </>
                       )}
                     </div>
                     
