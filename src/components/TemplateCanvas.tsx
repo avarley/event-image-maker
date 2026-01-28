@@ -521,7 +521,7 @@ export const TemplateCanvas = ({
                     fontWeight: parseInt(fontWeight),
                     color: textConfig.color,
                     textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
-                    lineHeight: 1.2,
+                    lineHeight: textConfig.lineHeight ?? 1.2,
                   }}
                 >
                   {line}

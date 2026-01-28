@@ -719,6 +719,23 @@ export const TemplateEditor = ({
                   </div>
 
                   <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="lineHeight">Line Height</Label>
+                      <span className="text-sm text-muted-foreground">
+                        {(template.textConfig.lineHeight ?? 1.2).toFixed(1)}
+                      </span>
+                    </div>
+                    <Slider
+                      id="lineHeight"
+                      min={80}
+                      max={200}
+                      step={5}
+                      value={[Math.round((template.textConfig.lineHeight ?? 1.2) * 100)]}
+                      onValueChange={([value]) => handleTextFieldChange('lineHeight', value / 100)}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
                     <Label htmlFor="color">Text Color</Label>
                     <div className="flex gap-2">
                       <Input
