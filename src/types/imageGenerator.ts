@@ -58,6 +58,7 @@ export interface TextConfig {
 
 export interface OverlayConfig {
   id: string;
+  name: string;
   image: HTMLImageElement;
   x: number;
   y: number;
@@ -68,6 +69,7 @@ export interface OverlayConfig {
 
 export interface SavedOverlay {
   id: string;
+  name: string;
   dataUrl: string;
   x: number;
   y: number;
