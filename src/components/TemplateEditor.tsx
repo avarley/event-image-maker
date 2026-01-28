@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { Upload, Image as ImageIcon, RotateCcw, Plus, Trash2, Save, FolderOpen } from 'lucide-react';
+import { Upload, Image as ImageIcon, RotateCcw, Plus, Trash2, Save, FolderOpen, FlipHorizontal, FlipVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -558,6 +558,32 @@ export const TemplateEditor = ({
                         <SelectItem value="above">Above Image</SelectItem>
                       </SelectContent>
                     </Select>
+                    <Button
+                      variant={overlay.flipHorizontal ? "secondary" : "ghost"}
+                      size="icon"
+                      onClick={() => {
+                        const updatedOverlays = (template.overlays || []).map((o) =>
+                          o.id === overlay.id ? { ...o, flipHorizontal: !o.flipHorizontal } : o
+                        );
+                        onUpdateTemplate(template.id, { overlays: updatedOverlays });
+                      }}
+                      title="Flip Horizontal"
+                    >
+                      <FlipHorizontal className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant={overlay.flipVertical ? "secondary" : "ghost"}
+                      size="icon"
+                      onClick={() => {
+                        const updatedOverlays = (template.overlays || []).map((o) =>
+                          o.id === overlay.id ? { ...o, flipVertical: !o.flipVertical } : o
+                        );
+                        onUpdateTemplate(template.id, { overlays: updatedOverlays });
+                      }}
+                      title="Flip Vertical"
+                    >
+                      <FlipVertical className="h-4 w-4" />
+                    </Button>
                     <Button
                       variant="ghost"
                       size="icon"

@@ -74,6 +74,8 @@ export interface OverlayConfig {
   height: number;
   layer: 'below' | 'above'; // below = under event image, above = on top
   rotation?: number; // Degrees, 0-360
+  flipHorizontal?: boolean;
+  flipVertical?: boolean;
 }
 
 export interface SavedOverlay {
@@ -86,6 +88,8 @@ export interface SavedOverlay {
   height: number;
   layer: 'below' | 'above';
   rotation?: number; // Degrees, 0-360
+  flipHorizontal?: boolean;
+  flipVertical?: boolean;
 }
 
 export interface OverlayPreset {

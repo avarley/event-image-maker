@@ -410,6 +410,9 @@ export const TemplateCanvas = ({
           alt="Overlay"
           className="w-full h-full object-contain pointer-events-none"
           draggable={false}
+          style={{
+            transform: `scaleX(${overlay.flipHorizontal ? -1 : 1}) scaleY(${overlay.flipVertical ? -1 : 1})`,
+          }}
         />
         
         {/* Border and label */}
