@@ -167,34 +167,41 @@ export const useImageGenerator = () => {
       // Draw baseplate first (background)
       ctx.drawImage(template.baseplate, 0, 0);
       
-      // Helper function to draw overlay with rotation
-      const drawOverlayWithRotation = (overlay: typeof template.overlays[0]) => {
+      // Helper function to draw overlay with rotation and flip
+      const drawOverlayWithTransform = (overlay: typeof template.overlays[0]) => {
         const rotation = overlay.rotation || 0;
+        const flipH = overlay.flipHorizontal || false;
+        const flipV = overlay.flipVertical || false;
+        
+        // Calculate center of the overlay
+        const centerX = overlay.x + overlay.width / 2;
+        const centerY = overlay.y + overlay.height / 2;
+        
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        
+        // Apply rotation
         if (rotation !== 0) {
-          // Calculate center of the overlay
-          const centerX = overlay.x + overlay.width / 2;
-          const centerY = overlay.y + overlay.height / 2;
-          
-          ctx.save();
-          ctx.translate(centerX, centerY);
           ctx.rotate((rotation * Math.PI) / 180);
-          ctx.drawImage(
-            overlay.image,
-            -overlay.width / 2,
-            -overlay.height / 2,
-            overlay.width,
-            overlay.height
-          );
-          ctx.restore();
-        } else {
-          ctx.drawImage(overlay.image, overlay.x, overlay.y, overlay.width, overlay.height);
         }
+        
+        // Apply flip transforms
+        ctx.scale(flipH ? -1 : 1, flipV ? -1 : 1);
+        
+        ctx.drawImage(
+          overlay.image,
+          -overlay.width / 2,
+          -overlay.height / 2,
+          overlay.width,
+          overlay.height
+        );
+        ctx.restore();
       };
       
       // Draw overlays BELOW event image
       const belowOverlays = template.overlays.filter(o => o.layer === 'below');
       for (const overlay of belowOverlays) {
-        drawOverlayWithRotation(overlay);
+        drawOverlayWithTransform(overlay);
       }
       
       // Load event image (use custom URL if provided)
@@ -244,7 +251,7 @@ export const useImageGenerator = () => {
       // Draw overlays ABOVE event image and shadow
       const aboveOverlays = template.overlays.filter(o => o.layer === 'above');
       for (const overlay of aboveOverlays) {
-        drawOverlayWithRotation(overlay);
+        drawOverlayWithTransform(overlay);
       }
       
       // Draw text (if enabled)
