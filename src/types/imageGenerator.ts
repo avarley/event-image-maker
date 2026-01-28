@@ -36,6 +36,10 @@ export interface TextFieldConfig {
   eventNameFontWeight?: FontWeight;
   dateFontWeight?: FontWeight;
   venueLocationFontWeight?: FontWeight;
+  // Per-field font families
+  eventNameFontFamily?: string;
+  dateFontFamily?: string;
+  venueLocationFontFamily?: string;
   // Event name styling
   eventNameUppercase?: boolean;
 }
@@ -136,5 +140,8 @@ export const DEFAULT_TEXT_FIELDS: TextFieldConfig = {
   eventNameFontWeight: '700',
   dateFontWeight: '700',
   venueLocationFontWeight: '700',
+  eventNameFontFamily: 'aktiv-grotesk-condensed',
+  dateFontFamily: 'aktiv-grotesk-condensed',
+  venueLocationFontFamily: 'aktiv-grotesk-condensed',
   eventNameUppercase: false,
 };
