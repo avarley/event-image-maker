@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { SavedTemplate, TextConfig, DEFAULT_TEXT_FIELDS } from '@/types/imageGenerator';
+import { toast } from 'sonner';
 
 const STORAGE_KEY = 'bulk-image-generator-templates';
 
@@ -44,7 +45,17 @@ export const useTemplateStorage = () => {
 
   // Save templates to localStorage whenever they change
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(templates));
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(templates));
+    } catch (e) {
+      if (e instanceof DOMException && e.name === 'QuotaExceededError') {
+        toast.error('Storage full! Delete some templates or overlays to free up space.', {
+          duration: 5000,
+        });
+      } else {
+        console.error('Failed to save templates:', e);
+      }
+    }
   }, [templates]);
 
   const createTemplate = useCallback((name: string = 'New Template'): SavedTemplate => {
