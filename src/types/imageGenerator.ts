@@ -65,6 +65,7 @@ export interface OverlayConfig {
   width: number;
   height: number;
   layer: 'below' | 'above'; // below = under event image, above = on top
+  rotation?: number; // Degrees, 0-360
 }
 
 export interface SavedOverlay {
@@ -76,6 +77,7 @@ export interface SavedOverlay {
   width: number;
   height: number;
   layer: 'below' | 'above';
+  rotation?: number; // Degrees, 0-360
 }
 
 export interface OverlayPreset {

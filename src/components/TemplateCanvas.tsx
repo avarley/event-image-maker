@@ -14,7 +14,7 @@ interface TemplateCanvasProps {
   eventImageAspectRatio?: number; // Width / Height of actual event image
 }
 
-type ActionType = 'move' | 'resize' | null;
+type ActionType = 'move' | 'resize' | 'rotate' | null;
 type ResizeCorner = 'nw' | 'ne' | 'sw' | 'se' | null;
 
 export const TemplateCanvas = ({
@@ -42,6 +42,7 @@ export const TemplateCanvas = ({
   const [overlayDragOffset, setOverlayDragOffset] = useState({ x: 0, y: 0 });
   const [initialOverlaySize, setInitialOverlaySize] = useState({ width: 0, height: 0 });
   const [initialMousePos, setInitialMousePos] = useState({ x: 0, y: 0 });
+  const [initialRotation, setInitialRotation] = useState(0);
   
   // Snapping state
   const [snappedToX, setSnappedToX] = useState(false);
@@ -193,6 +194,28 @@ export const TemplateCanvas = ({
               : o
           );
           onOverlaysChange(updatedOverlays);
+        } else if (overlayAction === 'rotate') {
+          // Calculate angle from overlay center to mouse position
+          const centerX = overlay.x + overlay.width / 2;
+          const centerY = overlay.y + overlay.height / 2;
+          
+          const angle = Math.atan2(mouseY - centerY, mouseX - centerX);
+          const angleDeg = (angle * 180 / Math.PI) + 90; // Offset so 0 is up
+          
+          // Snap to 15-degree increments when close
+          const snapAngle = 15;
+          const snappedAngle = Math.round(angleDeg / snapAngle) * snapAngle;
+          const finalAngle = Math.abs(angleDeg - snappedAngle) < 5 ? snappedAngle : angleDeg;
+          
+          // Normalize to 0-360
+          const normalizedAngle = ((finalAngle % 360) + 360) % 360;
+          
+          const updatedOverlays = overlays.map((o) =>
+            o.id === activeOverlayId
+              ? { ...o, rotation: Math.round(normalizedAngle) }
+              : o
+          );
+          onOverlaysChange(updatedOverlays);
         }
       }
     },
@@ -261,6 +284,21 @@ export const TemplateCanvas = ({
       setInitialOverlaySize({ width: overlay.width, height: overlay.height });
     },
     [overlays, scale]
+  );
+
+  const handleRotateMouseDown = useCallback(
+    (e: React.MouseEvent, overlayId: string) => {
+      e.stopPropagation();
+      if (!containerRef.current) return;
+
+      const overlay = overlays.find((o) => o.id === overlayId);
+      if (!overlay) return;
+
+      setActiveOverlayId(overlayId);
+      setOverlayAction('rotate');
+      setInitialRotation(overlay.rotation || 0);
+    },
+    [overlays]
   );
 
   // Calculate text alignment offset for display
@@ -344,16 +382,19 @@ export const TemplateCanvas = ({
 
   const renderOverlay = (overlay: SavedOverlay) => {
     const isActive = activeOverlayId === overlay.id;
+    const rotation = overlay.rotation || 0;
 
     return (
       <div
         key={overlay.id}
-        className={`absolute group ${isActive ? 'ring-2 ring-purple-500 ring-offset-2' : ''}`}
+        className={`absolute group ${isActive ? 'z-10' : ''}`}
         style={{
           left: overlay.x * scale,
           top: overlay.y * scale,
           width: overlay.width * scale,
           height: overlay.height * scale,
+          transform: `rotate(${rotation}deg)`,
+          transformOrigin: 'center center',
           cursor: overlayAction === 'move' && isActive ? 'grabbing' : 'grab',
         }}
         onMouseDown={(e) => handleOverlayMouseDown(e, overlay.id)}
@@ -366,9 +407,12 @@ export const TemplateCanvas = ({
         />
         
         {/* Border and label */}
-        <div className="absolute inset-0 border-2 border-dashed border-purple-500 bg-purple-500/10 group-hover:bg-purple-500/20 pointer-events-none" />
-        <span className="absolute -top-6 left-0 text-xs bg-purple-500 text-white px-1 rounded whitespace-nowrap">
-          Overlay ({overlay.layer})
+        <div className={`absolute inset-0 border-2 border-dashed border-purple-500 bg-purple-500/10 group-hover:bg-purple-500/20 pointer-events-none ${isActive ? 'ring-2 ring-purple-500 ring-offset-2' : ''}`} />
+        <span 
+          className="absolute -top-6 left-0 text-xs bg-purple-500 text-white px-1 rounded whitespace-nowrap"
+          style={{ transform: `rotate(-${rotation}deg)`, transformOrigin: 'left center' }}
+        >
+          {overlay.name} ({rotation}°)
         </span>
 
         {/* Resize handles */}
@@ -386,6 +430,19 @@ export const TemplateCanvas = ({
             onMouseDown={(e) => handleResizeMouseDown(e, overlay.id, corner as ResizeCorner)}
           />
         ))}
+
+        {/* Rotation handle - circular handle above the overlay */}
+        <div
+          className="absolute left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center"
+          style={{ top: -32 }}
+        >
+          <div className="w-px h-4 bg-purple-500" />
+          <div
+            className="w-4 h-4 bg-purple-500 border-2 border-white rounded-full cursor-grab active:cursor-grabbing hover:scale-110 transition-transform"
+            onMouseDown={(e) => handleRotateMouseDown(e, overlay.id)}
+            title="Drag to rotate"
+          />
+        </div>
       </div>
     );
   };
