@@ -168,6 +168,7 @@ const Index = () => {
                   width: overlay.width,
                   height: overlay.height,
                   layer: overlay.layer,
+                  rotation: overlay.rotation,
                 });
               };
               overlayImg.onerror = () => resolveOverlay(null);
