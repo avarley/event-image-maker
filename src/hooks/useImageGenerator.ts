@@ -225,13 +225,7 @@ export const useImageGenerator = () => {
       // Draw event image (middle layer)
       ctx.drawImage(eventImage, drawX, drawY, drawWidth, drawHeight);
       
-      // Draw overlays ABOVE event image
-      const aboveOverlays = template.overlays.filter(o => o.layer === 'above');
-      for (const overlay of aboveOverlays) {
-        drawOverlayWithRotation(overlay);
-      }
-      
-      // Draw bottom shadow gradient (if enabled) - AFTER event image so it's visible
+      // Draw bottom shadow gradient (if enabled) - AFTER event image, BEFORE above overlays
       if (template.textConfig.bottomShadowEnabled) {
         const heightPercent = (template.textConfig.bottomShadowHeight ?? 33) / 100;
         const gradientHeight = canvasHeight * heightPercent;
@@ -245,6 +239,12 @@ export const useImageGenerator = () => {
         
         ctx.fillStyle = gradient;
         ctx.fillRect(0, canvasHeight - gradientHeight, canvasWidth, gradientHeight);
+      }
+      
+      // Draw overlays ABOVE event image and shadow
+      const aboveOverlays = template.overlays.filter(o => o.layer === 'above');
+      for (const overlay of aboveOverlays) {
+        drawOverlayWithRotation(overlay);
       }
       
       // Draw text (if enabled)
