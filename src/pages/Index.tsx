@@ -276,6 +276,7 @@ const Index = () => {
             </div>
             <TemplateEditor
               template={activeTemplate}
+              allTemplates={templates}
               onUpdateTemplate={updateTemplate}
               sampleEventName={sampleEventName}
               eventImageAspectRatio={eventImageAspectRatio}
