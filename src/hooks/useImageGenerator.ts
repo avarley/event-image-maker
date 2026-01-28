@@ -155,19 +155,10 @@ export const useImageGenerator = () => {
       // Draw baseplate first (background)
       ctx.drawImage(template.baseplate, 0, 0);
       
-      // Draw bottom shadow gradient (if enabled) - first layer above baseplate
-      if (template.textConfig.bottomShadowEnabled) {
-        const gradientHeight = canvasHeight / 3;
-        const gradient = ctx.createLinearGradient(
-          0, canvasHeight - gradientHeight,
-          0, canvasHeight
-        );
-        const opacity = template.textConfig.bottomShadowOpacity ?? 0.5;
-        gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
-        gradient.addColorStop(1, `rgba(0, 0, 0, ${opacity})`);
-        
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, canvasHeight - gradientHeight, canvasWidth, gradientHeight);
+      // Draw overlays BELOW event image
+      const belowOverlays = template.overlays.filter(o => o.layer === 'below');
+      for (const overlay of belowOverlays) {
+        ctx.drawImage(overlay.image, overlay.x, overlay.y, overlay.width, overlay.height);
       }
       
       // Load event image (use custom URL if provided)
@@ -195,12 +186,6 @@ export const useImageGenerator = () => {
       const drawX = (canvasWidth - drawWidth) / 2;
       const drawY = (canvasHeight - drawHeight) / 2;
       
-      // Draw overlays BELOW event image
-      const belowOverlays = template.overlays.filter(o => o.layer === 'below');
-      for (const overlay of belowOverlays) {
-        ctx.drawImage(overlay.image, overlay.x, overlay.y, overlay.width, overlay.height);
-      }
-      
       // Draw event image (middle layer)
       ctx.drawImage(eventImage, drawX, drawY, drawWidth, drawHeight);
       
@@ -208,6 +193,21 @@ export const useImageGenerator = () => {
       const aboveOverlays = template.overlays.filter(o => o.layer === 'above');
       for (const overlay of aboveOverlays) {
         ctx.drawImage(overlay.image, overlay.x, overlay.y, overlay.width, overlay.height);
+      }
+      
+      // Draw bottom shadow gradient (if enabled) - AFTER event image so it's visible
+      if (template.textConfig.bottomShadowEnabled) {
+        const gradientHeight = canvasHeight / 3;
+        const gradient = ctx.createLinearGradient(
+          0, canvasHeight - gradientHeight,
+          0, canvasHeight
+        );
+        const opacity = template.textConfig.bottomShadowOpacity ?? 0.5;
+        gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
+        gradient.addColorStop(1, `rgba(0, 0, 0, ${opacity})`);
+        
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, canvasHeight - gradientHeight, canvasWidth, gradientHeight);
       }
       
       // Draw text (if enabled)
