@@ -44,6 +44,7 @@ export interface TextConfig {
   fontFamily: string;
   fontSize: number;
   eventNameFontSize?: number;
+  lineHeight?: number; // Multiplier for line height (e.g., 1.2 = 120%)
   color: string;
   x: number;
   y: number;
