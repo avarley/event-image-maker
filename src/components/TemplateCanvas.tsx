@@ -737,7 +737,7 @@ export const TemplateCanvas = ({
                       fontWeight: parseInt(fontWeight),
                       color: textConfig.color,
                       lineHeight: textConfig.lineHeight ?? 1.2,
-                      letterSpacing: `${letterSpacing}px`,
+                      letterSpacing: `${letterSpacing * scale}px`,
                     }}
                   >
                     {lineData.text}
