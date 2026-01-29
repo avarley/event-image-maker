@@ -21,7 +21,7 @@ export interface EventData {
   PRIMARY_URL: string;
 }
 
-export type FontWeight = '400' | '500' | '700' | '900';
+export type FontWeight = '400' | '500' | '600' | '700' | '900';
 
 export interface TextFieldConfig {
   showEventName: boolean;
