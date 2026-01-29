@@ -44,8 +44,10 @@ export interface TextFieldConfig {
   eventNameLetterSpacing?: number;
   dateLetterSpacing?: number;
   venueLocationLetterSpacing?: number;
-  // Event name styling
+  // Uppercase styling
   eventNameUppercase?: boolean;
+  dateFullUppercase?: boolean;  // Uppercase entire date line
+  venueLocationUppercase?: boolean;  // Uppercase venue/location line
 }
 
 export interface TextConfig {

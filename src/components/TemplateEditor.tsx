@@ -740,6 +740,14 @@ export const TemplateEditor = ({
                               className="w-16 h-7 text-xs"
                             />
                           </div>
+                          <div className="flex items-center gap-2">
+                            <Checkbox
+                              id="dateFullUppercase"
+                              checked={textFields.dateFullUppercase ?? false}
+                              onCheckedChange={(checked) => handleFieldToggle('dateFullUppercase', checked === true)}
+                            />
+                            <Label htmlFor="dateFullUppercase" className="text-sm">UPPERCASE</Label>
+                          </div>
                         </>
                       )}
                     </div>
@@ -821,6 +829,14 @@ export const TemplateEditor = ({
                               onChange={(e) => handleFieldToggle('venueLocationLetterSpacing', parseInt(e.target.value) || 0)}
                               className="w-16 h-7 text-xs"
                             />
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Checkbox
+                              id="venueLocationUppercase"
+                              checked={textFields.venueLocationUppercase ?? false}
+                              onCheckedChange={(checked) => handleFieldToggle('venueLocationUppercase', checked === true)}
+                            />
+                            <Label htmlFor="venueLocationUppercase" className="text-sm">UPPERCASE</Label>
                           </div>
                         </>
                       )}

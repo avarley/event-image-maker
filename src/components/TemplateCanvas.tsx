@@ -674,8 +674,20 @@ export const TemplateCanvas = ({
           >
             {(sampleText || 'Sample Event Name').split('\n').map((lineText, index) => {
               const fields = textConfig.fields || DEFAULT_TEXT_FIELDS;
-              // Apply uppercase to first line (event name) if enabled
-              const line = index === 0 && fields.eventNameUppercase ? lineText.toUpperCase() : lineText;
+              
+              // Apply uppercase based on which line this is
+              let line = lineText;
+              if (index === 0 && fields.eventNameUppercase) {
+                line = lineText.toUpperCase();
+              } else if (index === 1 && fields.showDate && fields.dateFullUppercase) {
+                line = lineText.toUpperCase();
+              } else if (index >= 2 && fields.venueLocationUppercase) {
+                line = lineText.toUpperCase();
+              } else if (index === 1 && !fields.showDate && fields.venueLocationUppercase) {
+                // If no date, venue/location is on line 1
+                line = lineText.toUpperCase();
+              }
+              
               const fontSize = index === 0 && textConfig.eventNameFontSize 
                 ? textConfig.eventNameFontSize 
                 : textConfig.fontSize;
