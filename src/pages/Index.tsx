@@ -59,11 +59,11 @@ const Index = () => {
       img.onload = () => {
         setEventImageAspectRatio(img.width / img.height);
       };
-      // Use custom image if overridden, otherwise the large URL
+      // Use allorigins as CORS proxy (works in production)
       const imageUrl = imageOverrides[firstSelectedEvent.EVENT_ID] 
         || firstSelectedEvent.EVENT_IMAGE_LARGE_URL;
       img.src = imageUrl.startsWith('http') 
-        ? `https://corsproxy.io/?${encodeURIComponent(imageUrl)}`
+        ? `https://api.allorigins.win/raw?url=${encodeURIComponent(imageUrl)}`
         : imageUrl;
     } else {
       setEventImageAspectRatio(undefined);
@@ -82,7 +82,8 @@ const Index = () => {
 
     setIsLoadingEvents(true);
     try {
-      const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(feedUrl)}`;
+      // Use allorigins as CORS proxy (works in production)
+      const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(feedUrl)}`;
       const response = await fetch(proxyUrl);
       const data = await response.json();
       // Ensure data is an array
