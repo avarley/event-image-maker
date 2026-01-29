@@ -9,9 +9,9 @@ export const useImageGenerator = () => {
       img.crossOrigin = 'anonymous';
       img.onload = () => resolve(img);
       img.onerror = reject;
-      // Use a CORS proxy for external images
+      // Use allorigins as CORS proxy for external images (works in production)
       if (src.startsWith('http') && !src.includes('localhost')) {
-        img.src = `https://corsproxy.io/?${encodeURIComponent(src)}`;
+        img.src = `https://api.allorigins.win/raw?url=${encodeURIComponent(src)}`;
       } else {
         img.src = src;
       }
