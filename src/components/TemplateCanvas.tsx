@@ -672,62 +672,79 @@ export const TemplateCanvas = ({
               textAlign: textConfig.textAlign,
             }}
           >
-            {(sampleText || 'Sample Event Name').split('\n').map((lineText, index) => {
+            {(() => {
               const fields = textConfig.fields || DEFAULT_TEXT_FIELDS;
               
-              // Apply uppercase based on which line this is
-              let line = lineText;
-              if (index === 0 && fields.eventNameUppercase) {
-                line = lineText.toUpperCase();
-              } else if (index === 1 && fields.showDate && fields.dateFullUppercase) {
-                line = lineText.toUpperCase();
-              } else if (index >= 2 && fields.venueLocationUppercase) {
-                line = lineText.toUpperCase();
-              } else if (index === 1 && !fields.showDate && fields.venueLocationUppercase) {
-                // If no date, venue/location is on line 1
-                line = lineText.toUpperCase();
+              // Build structured text lines with explicit field type tracking
+              // This matches the logic in useImageGenerator.ts
+              interface TextLineData {
+                text: string;
+                fieldType: 'eventName' | 'date' | 'venueLocation';
               }
               
-              const fontSize = index === 0 && textConfig.eventNameFontSize 
-                ? textConfig.eventNameFontSize 
-                : textConfig.fontSize;
+              const textLines: TextLineData[] = [];
+              const rawLines = (sampleText || 'Sample Event Name').split('\n');
+              let lineIndex = 0;
               
-              // Determine font weight, family, and letter spacing based on which line this is
-              let fontWeight: FontWeight = '700';
-              let fontFamily: string = textConfig.fontFamily;
-              let letterSpacing: number = 0;
-              
-              if (index === 0 && fields.showEventName) {
-                fontWeight = fields.eventNameFontWeight || '700';
-                fontFamily = fields.eventNameFontFamily || textConfig.fontFamily;
-                letterSpacing = fields.eventNameLetterSpacing ?? 0;
-              } else if (index === 1 && fields.showDate) {
-                fontWeight = fields.dateFontWeight || '700';
-                fontFamily = fields.dateFontFamily || textConfig.fontFamily;
-                letterSpacing = fields.dateLetterSpacing ?? 0;
-              } else if (index >= 1) {
-                // Venue/Location line
-                fontWeight = fields.venueLocationFontWeight || '700';
-                fontFamily = fields.venueLocationFontFamily || textConfig.fontFamily;
-                letterSpacing = fields.venueLocationLetterSpacing ?? 0;
+              if (fields.showEventName && rawLines[lineIndex]) {
+                let text = rawLines[lineIndex];
+                if (fields.eventNameUppercase) text = text.toUpperCase();
+                textLines.push({ text, fieldType: 'eventName' });
+                lineIndex++;
               }
               
-              return (
-                <div
-                  key={index}
-                  style={{
-                    fontFamily: fontFamily,
-                    fontSize: fontSize * scale,
-                    fontWeight: parseInt(fontWeight),
-                    color: textConfig.color,
-                    lineHeight: textConfig.lineHeight ?? 1.2,
-                    letterSpacing: `${letterSpacing}px`,
-                  }}
-                >
-                  {line}
-                </div>
-              );
-            })}
+              if (fields.showDate && rawLines[lineIndex]) {
+                let text = rawLines[lineIndex];
+                if (fields.dateFullUppercase) text = text.toUpperCase();
+                textLines.push({ text, fieldType: 'date' });
+                lineIndex++;
+              }
+              
+              // Venue/Location line (remaining lines)
+              if ((fields.showVenue || fields.showLocation) && rawLines[lineIndex]) {
+                let text = rawLines[lineIndex];
+                if (fields.venueLocationUppercase) text = text.toUpperCase();
+                textLines.push({ text, fieldType: 'venueLocation' });
+              }
+              
+              return textLines.map((lineData, idx) => {
+                let fontSize = textConfig.fontSize;
+                let fontWeight: FontWeight = '700';
+                let fontFamily: string = textConfig.fontFamily;
+                let letterSpacing: number = 0;
+                
+                if (lineData.fieldType === 'eventName') {
+                  fontSize = textConfig.eventNameFontSize || textConfig.fontSize;
+                  fontWeight = fields.eventNameFontWeight || '700';
+                  fontFamily = fields.eventNameFontFamily || textConfig.fontFamily;
+                  letterSpacing = fields.eventNameLetterSpacing ?? 0;
+                } else if (lineData.fieldType === 'date') {
+                  fontWeight = fields.dateFontWeight || '700';
+                  fontFamily = fields.dateFontFamily || textConfig.fontFamily;
+                  letterSpacing = fields.dateLetterSpacing ?? 0;
+                } else if (lineData.fieldType === 'venueLocation') {
+                  fontWeight = fields.venueLocationFontWeight || '700';
+                  fontFamily = fields.venueLocationFontFamily || textConfig.fontFamily;
+                  letterSpacing = fields.venueLocationLetterSpacing ?? 0;
+                }
+                
+                return (
+                  <div
+                    key={idx}
+                    style={{
+                      fontFamily: fontFamily,
+                      fontSize: fontSize * scale,
+                      fontWeight: parseInt(fontWeight),
+                      color: textConfig.color,
+                      lineHeight: textConfig.lineHeight ?? 1.2,
+                      letterSpacing: `${letterSpacing}px`,
+                    }}
+                  >
+                    {lineData.text}
+                  </div>
+                );
+              });
+            })()}
           </div>
           <span className="absolute -top-6 left-0 text-xs bg-green-500 text-white px-1 rounded">
             Text (drag to move)
