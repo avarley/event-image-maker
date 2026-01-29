@@ -329,16 +329,16 @@ export const TemplateCanvas = ({
     const portrait45Width = height * (4 / 5);
     const sideCrop = (width - portrait45Width) / 2;
     
-    // 5:4 Landscape - top and bottom get cropped (centered)
+    // 5:4 Landscape - bottom gets cropped
     // The visible height becomes width * (4/5)
     const landscape54Height = width * (4 / 5);
-    const verticalCrop = (height - landscape54Height) / 2;
+    const bottomCrop = height - landscape54Height;
     
     return {
       left: Math.max(0, sideCrop),
       right: Math.max(0, sideCrop),
-      top: Math.max(0, verticalCrop),
-      bottom: Math.max(0, verticalCrop),
+      top: 0,
+      bottom: Math.max(0, bottomCrop),
     };
   };
 
