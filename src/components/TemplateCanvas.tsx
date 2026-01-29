@@ -48,9 +48,12 @@ export const TemplateCanvas = ({
   const [isDraggingEventFrame, setIsDraggingEventFrame] = useState(false);
   const [eventFrameDragStart, setEventFrameDragStart] = useState({ x: 0, y: 0 });
   
-  // Snapping state
+  // Snapping state for text
   const [snappedToX, setSnappedToX] = useState(false);
   const [snappedToY, setSnappedToY] = useState(false);
+  // Snapping state for event frame
+  const [eventFrameSnappedX, setEventFrameSnappedX] = useState(false);
+  const [eventFrameSnappedY, setEventFrameSnappedY] = useState(false);
   const SNAP_THRESHOLD = 10; // pixels
 
   // Load baseplate dimensions
@@ -130,6 +133,24 @@ export const TemplateCanvas = ({
         // Clamp to 0-100
         newXPercent = Math.max(0, Math.min(100, newXPercent));
         newYPercent = Math.max(0, Math.min(100, newYPercent));
+        
+        // Snap to center (50%) with threshold
+        const snapThresholdPercent = (SNAP_THRESHOLD / maxXRange) * 100;
+        const snapThresholdPercentY = (SNAP_THRESHOLD / maxYRange) * 100;
+        
+        if (Math.abs(newXPercent - 50) < Math.max(2, snapThresholdPercent)) {
+          newXPercent = 50;
+          setEventFrameSnappedX(true);
+        } else {
+          setEventFrameSnappedX(false);
+        }
+        
+        if (Math.abs(newYPercent - 50) < Math.max(2, snapThresholdPercentY)) {
+          newYPercent = 50;
+          setEventFrameSnappedY(true);
+        } else {
+          setEventFrameSnappedY(false);
+        }
         
         onTextConfigChange({
           ...textConfig,
@@ -291,6 +312,8 @@ export const TemplateCanvas = ({
     setResizeCorner(null);
     setSnappedToX(false);
     setSnappedToY(false);
+    setEventFrameSnappedX(false);
+    setEventFrameSnappedY(false);
     setIsDraggingEventFrame(false);
   }, []);
 
@@ -537,7 +560,7 @@ export const TemplateCanvas = ({
         draggable={false}
       />
 
-      {/* Center guidelines - always visible when dragging */}
+      {/* Center guidelines - visible when dragging text */}
       {isDraggingText && baseplateSize.width > 0 && (
         <>
           {/* Vertical center line */}
@@ -547,6 +570,7 @@ export const TemplateCanvas = ({
             }`}
             style={{
               left: (baseplateSize.width / 2) * scale,
+              zIndex: 200,
             }}
           />
           {/* Horizontal center line */}
@@ -556,6 +580,33 @@ export const TemplateCanvas = ({
             }`}
             style={{
               top: (baseplateSize.height / 2) * scale,
+              zIndex: 200,
+            }}
+          />
+        </>
+      )}
+
+      {/* Center guidelines - visible when dragging event frame */}
+      {isDraggingEventFrame && baseplateSize.width > 0 && (
+        <>
+          {/* Vertical center line */}
+          <div
+            className={`absolute top-0 bottom-0 w-px pointer-events-none transition-colors ${
+              eventFrameSnappedX ? 'bg-cyan-400' : 'bg-cyan-400/50'
+            }`}
+            style={{
+              left: (baseplateSize.width / 2) * scale,
+              zIndex: 200,
+            }}
+          />
+          {/* Horizontal center line */}
+          <div
+            className={`absolute left-0 right-0 h-px pointer-events-none transition-colors ${
+              eventFrameSnappedY ? 'bg-cyan-400' : 'bg-cyan-400/50'
+            }`}
+            style={{
+              top: (baseplateSize.height / 2) * scale,
+              zIndex: 200,
             }}
           />
         </>
