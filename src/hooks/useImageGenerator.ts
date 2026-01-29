@@ -8,13 +8,38 @@ export const useImageGenerator = () => {
       const img = new Image();
       img.crossOrigin = 'anonymous';
       img.onload = () => resolve(img);
-      img.onerror = reject;
-      // Use allorigins as CORS proxy for external images (works in production)
-      if (src.startsWith('http') && !src.includes('localhost')) {
-        img.src = `https://api.allorigins.win/raw?url=${encodeURIComponent(src)}`;
-      } else {
+      img.onerror = (e) => {
+        console.error('Image load failed for:', src, e);
+        reject(e);
+      };
+      
+      // For data URLs or local files, load directly
+      if (src.startsWith('data:') || src.startsWith('blob:') || !src.startsWith('http')) {
         img.src = src;
+        return;
       }
+      
+      // For external URLs, try direct load first, then fallback to proxy
+      const tryDirectLoad = () => {
+        img.src = src;
+      };
+      
+      const tryProxyLoad = () => {
+        // Use corsproxy.io as primary proxy (more reliable)
+        img.src = `https://corsproxy.io/?${encodeURIComponent(src)}`;
+      };
+      
+      // Try direct load first
+      const directImg = new Image();
+      directImg.crossOrigin = 'anonymous';
+      directImg.onload = () => {
+        img.src = src;
+      };
+      directImg.onerror = () => {
+        // Direct load failed, try proxy
+        tryProxyLoad();
+      };
+      directImg.src = src;
     });
   }, []);
 
