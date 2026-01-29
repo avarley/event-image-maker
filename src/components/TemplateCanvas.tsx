@@ -349,20 +349,31 @@ export const TemplateCanvas = ({
     const width = baseplateSize.width;
     const height = baseplateSize.height;
     
-    // Match the 4:5 safe zone width calculation
-    const portrait45Width = height * (4 / 5);
-    const safeZoneWidth = Math.min(width, portrait45Width);
-    
-    // Event image spans 95% of the safe zone width
-    const imageWidth = safeZoneWidth * 0.95;
-    
     // Use provided aspect ratio, or default to 3:2 (common for event photos)
     const aspectRatio = eventImageAspectRatio || 3 / 2;
-    const imageHeight = imageWidth / aspectRatio;
     
-    // Center horizontally, positioned 100px above center
-    const imageX = (width - imageWidth) / 2;
-    const imageY = (height - imageHeight) / 2 - 100;
+    // Event image fills the entire canvas (cover mode)
+    let imageWidth: number;
+    let imageHeight: number;
+    
+    if (aspectRatio > width / height) {
+      // Image is wider - match height, width extends beyond
+      imageHeight = height;
+      imageWidth = imageHeight * aspectRatio;
+    } else {
+      // Image is taller - match width, height extends beyond
+      imageWidth = width;
+      imageHeight = imageWidth / aspectRatio;
+    }
+    
+    // Get position from config (default to center: 50, 50)
+    const xPercent = textConfig.eventImageX ?? 50;
+    const yPercent = textConfig.eventImageY ?? 50;
+    
+    // Calculate position based on percentage (0-100)
+    // At 50%, image is centered. At 0%, image is shifted left/up. At 100%, shifted right/down.
+    const imageX = (width - imageWidth) * (xPercent / 100);
+    const imageY = (height - imageHeight) * (yPercent / 100);
     
     return {
       x: imageX,
@@ -519,20 +530,18 @@ export const TemplateCanvas = ({
       {/* Event image position overlay - preview only */}
       {showEventImageOverlay && baseplateSize.width > 0 && (
         <div
-          className="absolute border-2 border-dashed border-blue-500 bg-blue-500/10 pointer-events-none flex items-center justify-center"
+          className="absolute border-2 border-dashed border-blue-500 bg-blue-500/10 pointer-events-none flex items-center justify-center overflow-hidden"
           style={{
-            left: eventImageBounds.x * scale,
-            top: eventImageBounds.y * scale,
-            width: eventImageBounds.width * scale,
-            height: eventImageBounds.height * scale,
+            left: 0,
+            top: 0,
+            width: baseplateSize.width * scale,
+            height: baseplateSize.height * scale,
+            borderRadius: (textConfig.eventImageBorderRadius ?? 0) * scale,
           }}
         >
           <div className="text-blue-500 text-sm font-medium bg-blue-500/20 px-2 py-1 rounded">
-            Event Image
+            Event Image Area (with {textConfig.eventImageBorderRadius ?? 0}px rounded corners)
           </div>
-          <span className="absolute -top-6 left-0 text-xs bg-blue-500 text-white px-1 rounded">
-            Event Image Position
-          </span>
         </div>
       )}
 

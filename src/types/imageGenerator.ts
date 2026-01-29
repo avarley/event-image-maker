@@ -62,6 +62,10 @@ export interface TextConfig {
   bottomShadowEnabled?: boolean;
   bottomShadowOpacity?: number;
   bottomShadowHeight?: number; // 0-100 percentage of canvas height
+  // Event image positioning and styling
+  eventImageX?: number; // X position of event image center (percentage 0-100)
+  eventImageY?: number; // Y position of event image center (percentage 0-100)
+  eventImageBorderRadius?: number; // Border radius in pixels
 }
 
 export interface OverlayConfig {
