@@ -571,9 +571,6 @@ export const TemplateCanvas = ({
         />
       )}
 
-      {/* Overlays BELOW event image layer */}
-      {belowOverlays.map(renderOverlay)}
-
       {/* Event image frame preview - draggable */}
       {showEventImageOverlay && baseplateSize.width > 0 && (
         <div
@@ -595,7 +592,8 @@ export const TemplateCanvas = ({
         </div>
       )}
 
-      {/* Overlays ABOVE event image layer */}
+      {/* All overlays rendered ABOVE event image */}
+      {belowOverlays.map(renderOverlay)}
       {aboveOverlays.map(renderOverlay)}
 
       {/* Draggable text element - only show if text is enabled */}
