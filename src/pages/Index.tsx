@@ -85,11 +85,14 @@ const Index = () => {
       const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(feedUrl)}`;
       const response = await fetch(proxyUrl);
       const data = await response.json();
-      setEvents(data);
-      toast.success(`Loaded ${data.length} events`);
+      // Ensure data is an array
+      const eventsArray = Array.isArray(data) ? data : [];
+      setEvents(eventsArray);
+      toast.success(`Loaded ${eventsArray.length} events`);
     } catch (error) {
       console.error('Failed to fetch events:', error);
       toast.error('Failed to load events. Check the URL and try again.');
+      setEvents([]); // Reset to empty array on error
     } finally {
       setIsLoadingEvents(false);
     }
