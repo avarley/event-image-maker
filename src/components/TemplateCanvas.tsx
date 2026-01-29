@@ -552,11 +552,12 @@ export const TemplateCanvas = ({
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
     >
-      {/* Baseplate image */}
+      {/* Baseplate image - z-index 0 to stay behind everything */}
       <img
         src={baseplateUrl}
         alt="Template"
         className="absolute inset-0 w-full h-full pointer-events-none"
+        style={{ zIndex: 0 }}
         draggable={false}
       />
 
@@ -619,6 +620,7 @@ export const TemplateCanvas = ({
           style={{
             height: baseplateSize.height * scale * ((textConfig.bottomShadowHeight ?? 33) / 100),
             background: `linear-gradient(to bottom, transparent, rgba(0, 0, 0, ${textConfig.bottomShadowOpacity ?? 0.5}))`,
+            zIndex: 5,
           }}
         />
       )}
@@ -660,6 +662,7 @@ export const TemplateCanvas = ({
             top: textConfig.y * scale,
             width: textConfig.maxWidth * scale,
             cursor: 'grab',
+            zIndex: 150,
           }}
         >
           {/* Text bounding box */}
