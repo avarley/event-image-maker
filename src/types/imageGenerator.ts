@@ -62,9 +62,11 @@ export interface TextConfig {
   bottomShadowEnabled?: boolean;
   bottomShadowOpacity?: number;
   bottomShadowHeight?: number; // 0-100 percentage of canvas height
-  // Event image positioning and styling
-  eventImageX?: number; // X position of event image center (percentage 0-100)
-  eventImageY?: number; // Y position of event image center (percentage 0-100)
+  // Event image frame settings
+  eventImageX?: number; // X position as percentage (0-100, 50 = centered)
+  eventImageY?: number; // Y position as percentage (0-100, 50 = centered)
+  eventImageWidth?: number; // Width as percentage of canvas width (default 80)
+  eventImageHeight?: number; // Height as percentage of canvas height (default 50)
   eventImageBorderRadius?: number; // Border radius in pixels
 }
 

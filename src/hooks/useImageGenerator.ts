@@ -208,47 +208,50 @@ export const useImageGenerator = () => {
       const imageUrl = customImageUrl || event.EVENT_IMAGE_LARGE_URL;
       const eventImage = await loadImage(imageUrl);
       
-      // Cover mode: fill entire canvas while maintaining aspect ratio (crops if needed)
+      // Get frame settings from config
+      const frameWidthPercent = template.textConfig.eventImageWidth ?? 80;
+      const frameHeightPercent = template.textConfig.eventImageHeight ?? 50;
+      const xPercent = template.textConfig.eventImageX ?? 50;
+      const yPercent = template.textConfig.eventImageY ?? 30;
+      const borderRadius = template.textConfig.eventImageBorderRadius ?? 0;
+      
+      // Calculate frame dimensions
+      const frameWidth = canvasWidth * (frameWidthPercent / 100);
+      const frameHeight = canvasHeight * (frameHeightPercent / 100);
+      
+      // Calculate frame position (percentage-based, 50 = centered)
+      const frameX = (canvasWidth - frameWidth) * (xPercent / 100);
+      const frameY = (canvasHeight - frameHeight) * (yPercent / 100);
+      
+      // Calculate how to fit event image within frame (cover mode within frame)
       const eventAspect = eventImage.width / eventImage.height;
-      const canvasAspect = canvasWidth / canvasHeight;
+      const frameAspect = frameWidth / frameHeight;
       
-      let drawWidth: number;
-      let drawHeight: number;
+      let srcX = 0, srcY = 0, srcWidth = eventImage.width, srcHeight = eventImage.height;
       
-      if (eventAspect > canvasAspect) {
-        // Image is wider than canvas - match height, crop sides
-        drawHeight = canvasHeight;
-        drawWidth = drawHeight * eventAspect;
+      if (eventAspect > frameAspect) {
+        // Image is wider - crop sides
+        srcWidth = eventImage.height * frameAspect;
+        srcX = (eventImage.width - srcWidth) / 2;
       } else {
-        // Image is taller than canvas - match width, crop top/bottom
-        drawWidth = canvasWidth;
-        drawHeight = drawWidth / eventAspect;
+        // Image is taller - crop top/bottom
+        srcHeight = eventImage.width / frameAspect;
+        srcY = (eventImage.height - srcHeight) / 2;
       }
       
-      // Get position from config (default to center: 50, 50)
-      const xPercent = template.textConfig.eventImageX ?? 50;
-      const yPercent = template.textConfig.eventImageY ?? 50;
-      
-      // Calculate position based on percentage (0-100)
-      const drawX = (canvasWidth - drawWidth) * (xPercent / 100);
-      const drawY = (canvasHeight - drawHeight) * (yPercent / 100);
-      
-      // Apply rounded corners if configured
-      const borderRadius = template.textConfig.eventImageBorderRadius ?? 0;
+      // Draw event image within frame with optional rounded corners
+      ctx.save();
       if (borderRadius > 0) {
-        ctx.save();
-        // Create rounded rectangle clip path
         ctx.beginPath();
-        ctx.roundRect(0, 0, canvasWidth, canvasHeight, borderRadius);
+        ctx.roundRect(frameX, frameY, frameWidth, frameHeight, borderRadius);
         ctx.clip();
       }
-      
-      // Draw event image (middle layer)
-      ctx.drawImage(eventImage, drawX, drawY, drawWidth, drawHeight);
-      
-      if (borderRadius > 0) {
-        ctx.restore();
-      }
+      ctx.drawImage(
+        eventImage,
+        srcX, srcY, srcWidth, srcHeight,
+        frameX, frameY, frameWidth, frameHeight
+      );
+      ctx.restore();
       
       // Draw bottom shadow gradient (if enabled) - AFTER event image, BEFORE above overlays
       if (template.textConfig.bottomShadowEnabled) {
