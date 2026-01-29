@@ -225,12 +225,30 @@ export const useImageGenerator = () => {
         drawHeight = drawWidth / eventAspect;
       }
       
-      // Center the image (cropped parts extend beyond canvas)
-      const drawX = (canvasWidth - drawWidth) / 2;
-      const drawY = (canvasHeight - drawHeight) / 2;
+      // Get position from config (default to center: 50, 50)
+      const xPercent = template.textConfig.eventImageX ?? 50;
+      const yPercent = template.textConfig.eventImageY ?? 50;
+      
+      // Calculate position based on percentage (0-100)
+      const drawX = (canvasWidth - drawWidth) * (xPercent / 100);
+      const drawY = (canvasHeight - drawHeight) * (yPercent / 100);
+      
+      // Apply rounded corners if configured
+      const borderRadius = template.textConfig.eventImageBorderRadius ?? 0;
+      if (borderRadius > 0) {
+        ctx.save();
+        // Create rounded rectangle clip path
+        ctx.beginPath();
+        ctx.roundRect(0, 0, canvasWidth, canvasHeight, borderRadius);
+        ctx.clip();
+      }
       
       // Draw event image (middle layer)
       ctx.drawImage(eventImage, drawX, drawY, drawWidth, drawHeight);
+      
+      if (borderRadius > 0) {
+        ctx.restore();
+      }
       
       // Draw bottom shadow gradient (if enabled) - AFTER event image, BEFORE above overlays
       if (template.textConfig.bottomShadowEnabled) {
