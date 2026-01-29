@@ -444,14 +444,14 @@ export const TemplateCanvas = ({
   const belowOverlays = overlays.filter((o) => o.layer === 'below');
   const aboveOverlays = overlays.filter((o) => o.layer === 'above');
 
-  const renderOverlay = (overlay: SavedOverlay) => {
+  const renderOverlay = (overlay: SavedOverlay, index: number) => {
     const isActive = activeOverlayId === overlay.id;
     const rotation = overlay.rotation || 0;
 
     return (
       <div
         key={overlay.id}
-        className={`absolute group ${isActive ? 'z-10' : ''}`}
+        className={`absolute group`}
         style={{
           left: overlay.x * scale,
           top: overlay.y * scale,
@@ -460,6 +460,7 @@ export const TemplateCanvas = ({
           transform: `rotate(${rotation}deg)`,
           transformOrigin: 'center center',
           cursor: overlayAction === 'move' && isActive ? 'grabbing' : 'grab',
+          zIndex: isActive ? 100 : 50 + index,
         }}
         onMouseDown={(e) => handleOverlayMouseDown(e, overlay.id)}
       >
@@ -583,6 +584,7 @@ export const TemplateCanvas = ({
             width: eventImageBounds.width * scale,
             height: eventImageBounds.height * scale,
             borderRadius: (textConfig.eventImageBorderRadius ?? 0) * scale,
+            zIndex: 10,
           }}
           onMouseDown={handleEventFrameMouseDown}
         >
@@ -593,8 +595,8 @@ export const TemplateCanvas = ({
       )}
 
       {/* All overlays rendered ABOVE event image */}
-      {belowOverlays.map(renderOverlay)}
-      {aboveOverlays.map(renderOverlay)}
+      {belowOverlays.map((overlay, index) => renderOverlay(overlay, index))}
+      {aboveOverlays.map((overlay, index) => renderOverlay(overlay, belowOverlays.length + index))}
 
       {/* Draggable text element - only show if text is enabled */}
       {textEnabled && (
