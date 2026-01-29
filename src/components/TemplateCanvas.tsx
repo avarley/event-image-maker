@@ -344,42 +344,30 @@ export const TemplateCanvas = ({
 
   const safeZoneBounds = getSafeZoneBounds();
 
-  // Calculate event image bounds (matching useImageGenerator logic)
+  // Calculate event image frame bounds
   const getEventImageBounds = () => {
-    const width = baseplateSize.width;
-    const height = baseplateSize.height;
+    const canvasWidth = baseplateSize.width;
+    const canvasHeight = baseplateSize.height;
     
-    // Use provided aspect ratio, or default to 3:2 (common for event photos)
-    const aspectRatio = eventImageAspectRatio || 3 / 2;
-    
-    // Event image fills the entire canvas (cover mode)
-    let imageWidth: number;
-    let imageHeight: number;
-    
-    if (aspectRatio > width / height) {
-      // Image is wider - match height, width extends beyond
-      imageHeight = height;
-      imageWidth = imageHeight * aspectRatio;
-    } else {
-      // Image is taller - match width, height extends beyond
-      imageWidth = width;
-      imageHeight = imageWidth / aspectRatio;
-    }
-    
-    // Get position from config (default to center: 50, 50)
+    // Get frame settings from config
+    const frameWidthPercent = textConfig.eventImageWidth ?? 80;
+    const frameHeightPercent = textConfig.eventImageHeight ?? 50;
     const xPercent = textConfig.eventImageX ?? 50;
-    const yPercent = textConfig.eventImageY ?? 50;
+    const yPercent = textConfig.eventImageY ?? 30;
     
-    // Calculate position based on percentage (0-100)
-    // At 50%, image is centered. At 0%, image is shifted left/up. At 100%, shifted right/down.
-    const imageX = (width - imageWidth) * (xPercent / 100);
-    const imageY = (height - imageHeight) * (yPercent / 100);
+    // Calculate frame dimensions
+    const frameWidth = canvasWidth * (frameWidthPercent / 100);
+    const frameHeight = canvasHeight * (frameHeightPercent / 100);
+    
+    // Calculate frame position (percentage-based, 50 = centered)
+    const frameX = (canvasWidth - frameWidth) * (xPercent / 100);
+    const frameY = (canvasHeight - frameHeight) * (yPercent / 100);
     
     return {
-      x: imageX,
-      y: imageY,
-      width: imageWidth,
-      height: imageHeight,
+      x: frameX,
+      y: frameY,
+      width: frameWidth,
+      height: frameHeight,
     };
   };
 
@@ -527,20 +515,20 @@ export const TemplateCanvas = ({
       {/* Overlays BELOW event image layer */}
       {belowOverlays.map(renderOverlay)}
 
-      {/* Event image position overlay - preview only */}
+      {/* Event image frame preview */}
       {showEventImageOverlay && baseplateSize.width > 0 && (
         <div
-          className="absolute border-2 border-dashed border-blue-500 bg-blue-500/10 pointer-events-none flex items-center justify-center overflow-hidden"
+          className="absolute border-2 border-dashed border-blue-500 bg-blue-500/20 pointer-events-none flex items-center justify-center"
           style={{
-            left: 0,
-            top: 0,
-            width: baseplateSize.width * scale,
-            height: baseplateSize.height * scale,
+            left: eventImageBounds.x * scale,
+            top: eventImageBounds.y * scale,
+            width: eventImageBounds.width * scale,
+            height: eventImageBounds.height * scale,
             borderRadius: (textConfig.eventImageBorderRadius ?? 0) * scale,
           }}
         >
-          <div className="text-blue-500 text-sm font-medium bg-blue-500/20 px-2 py-1 rounded">
-            Event Image Area (with {textConfig.eventImageBorderRadius ?? 0}px rounded corners)
+          <div className="text-blue-500 text-sm font-medium bg-white/80 px-2 py-1 rounded">
+            Event Image Frame
           </div>
         </div>
       )}

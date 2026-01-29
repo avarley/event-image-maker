@@ -964,11 +964,47 @@ export const TemplateEditor = ({
                   )}
                 </div>
 
-                {/* Event Image Settings */}
+                {/* Event Image Frame Settings */}
                 <div className="space-y-3">
-                  <Label className="text-sm font-medium">Event Image Settings</Label>
+                  <Label className="text-sm font-medium">Event Image Frame</Label>
                   
-                  <div className="space-y-4 max-w-md">
+                  <div className="grid grid-cols-2 gap-4 max-w-lg">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="eventImageWidth" className="text-sm">Width</Label>
+                        <span className="text-sm text-muted-foreground">
+                          {template.textConfig.eventImageWidth ?? 80}%
+                        </span>
+                      </div>
+                      <Slider
+                        id="eventImageWidth"
+                        min={10}
+                        max={100}
+                        step={5}
+                        value={[template.textConfig.eventImageWidth ?? 80]}
+                        onValueChange={([value]) => handleTextFieldChange('eventImageWidth', value)}
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="eventImageHeight" className="text-sm">Height</Label>
+                        <span className="text-sm text-muted-foreground">
+                          {template.textConfig.eventImageHeight ?? 50}%
+                        </span>
+                      </div>
+                      <Slider
+                        id="eventImageHeight"
+                        min={10}
+                        max={100}
+                        step={5}
+                        value={[template.textConfig.eventImageHeight ?? 50]}
+                        onValueChange={([value]) => handleTextFieldChange('eventImageHeight', value)}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4 max-w-lg">
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <Label htmlFor="eventImageX" className="text-sm">Horizontal Position</Label>
@@ -984,14 +1020,13 @@ export const TemplateEditor = ({
                         value={[template.textConfig.eventImageX ?? 50]}
                         onValueChange={([value]) => handleTextFieldChange('eventImageX', value)}
                       />
-                      <p className="text-xs text-muted-foreground">0% = left edge, 50% = centered, 100% = right edge</p>
                     </div>
                     
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <Label htmlFor="eventImageY" className="text-sm">Vertical Position</Label>
                         <span className="text-sm text-muted-foreground">
-                          {template.textConfig.eventImageY ?? 50}%
+                          {template.textConfig.eventImageY ?? 30}%
                         </span>
                       </div>
                       <Slider
@@ -999,28 +1034,27 @@ export const TemplateEditor = ({
                         min={0}
                         max={100}
                         step={1}
-                        value={[template.textConfig.eventImageY ?? 50]}
+                        value={[template.textConfig.eventImageY ?? 30]}
                         onValueChange={([value]) => handleTextFieldChange('eventImageY', value)}
                       />
-                      <p className="text-xs text-muted-foreground">0% = top edge, 50% = centered, 100% = bottom edge</p>
                     </div>
-                    
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="eventImageBorderRadius" className="text-sm">Border Radius</Label>
-                        <span className="text-sm text-muted-foreground">
-                          {template.textConfig.eventImageBorderRadius ?? 0}px
-                        </span>
-                      </div>
-                      <Slider
-                        id="eventImageBorderRadius"
-                        min={0}
-                        max={100}
-                        step={5}
-                        value={[template.textConfig.eventImageBorderRadius ?? 0]}
-                        onValueChange={([value]) => handleTextFieldChange('eventImageBorderRadius', value)}
-                      />
+                  </div>
+                  
+                  <div className="space-y-2 max-w-xs">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="eventImageBorderRadius" className="text-sm">Corner Radius</Label>
+                      <span className="text-sm text-muted-foreground">
+                        {template.textConfig.eventImageBorderRadius ?? 0}px
+                      </span>
                     </div>
+                    <Slider
+                      id="eventImageBorderRadius"
+                      min={0}
+                      max={100}
+                      step={5}
+                      value={[template.textConfig.eventImageBorderRadius ?? 0]}
+                      onValueChange={([value]) => handleTextFieldChange('eventImageBorderRadius', value)}
+                    />
                   </div>
                 </div>
 
