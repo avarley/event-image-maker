@@ -198,12 +198,6 @@ export const useImageGenerator = () => {
         ctx.restore();
       };
       
-      // Draw overlays BELOW event image
-      const belowOverlays = template.overlays.filter(o => o.layer === 'below');
-      for (const overlay of belowOverlays) {
-        drawOverlayWithTransform(overlay);
-      }
-      
       // Load event image (use custom URL if provided)
       const imageUrl = customImageUrl || event.EVENT_IMAGE_LARGE_URL;
       const eventImage = await loadImage(imageUrl);
@@ -269,9 +263,8 @@ export const useImageGenerator = () => {
         ctx.fillRect(0, canvasHeight - gradientHeight, canvasWidth, gradientHeight);
       }
       
-      // Draw overlays ABOVE event image and shadow
-      const aboveOverlays = template.overlays.filter(o => o.layer === 'above');
-      for (const overlay of aboveOverlays) {
+      // Draw ALL overlays above event image and shadow
+      for (const overlay of template.overlays) {
         drawOverlayWithTransform(overlay);
       }
       
