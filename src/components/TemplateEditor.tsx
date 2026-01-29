@@ -747,6 +747,57 @@ export const TemplateEditor = ({
             
             {(template.textEnabled ?? true) && (
               <>
+                {/* Global Text Settings */}
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="fontSize">Font Size (px)</Label>
+                    <Input
+                      id="fontSize"
+                      type="number"
+                      min={12}
+                      max={200}
+                      value={template.textConfig.fontSize}
+                      onChange={(e) => handleTextFieldChange('fontSize', parseInt(e.target.value) || 24)}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="lineHeight">Line Height</Label>
+                      <span className="text-sm text-muted-foreground">
+                        {(template.textConfig.lineHeight ?? 1.2).toFixed(1)}
+                      </span>
+                    </div>
+                    <Slider
+                      id="lineHeight"
+                      min={80}
+                      max={200}
+                      step={5}
+                      value={[Math.round((template.textConfig.lineHeight ?? 1.2) * 100)]}
+                      onValueChange={([value]) => handleTextFieldChange('lineHeight', value / 100)}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="color">Text Color</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="color"
+                        type="color"
+                        value={template.textConfig.color}
+                        onChange={(e) => handleTextFieldChange('color', e.target.value)}
+                        className="w-12 h-10 p-1 cursor-pointer"
+                      />
+                      <Input
+                        type="text"
+                        value={template.textConfig.color}
+                        onChange={(e) => handleTextFieldChange('color', e.target.value)}
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+                </div>
+
                 {/* Text Fields Toggles */}
                 <div className="border rounded-lg p-4 space-y-3">
                   <span className="text-sm font-medium">Display Fields</span>
@@ -1047,55 +1098,6 @@ export const TemplateEditor = ({
                   )}
                 </div>
 
-                {/* Bottom Shadow Toggle */}
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      id="bottomShadow"
-                      checked={template.textConfig.bottomShadowEnabled ?? false}
-                      onCheckedChange={(checked) => handleTextFieldChange('bottomShadowEnabled', checked)}
-                    />
-                    <Label htmlFor="bottomShadow" className="text-sm">Bottom Shadow Gradient</Label>
-                  </div>
-                  
-                  {template.textConfig.bottomShadowEnabled && (
-                    <div className="space-y-4 pl-6 max-w-xs">
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <Label htmlFor="shadowOpacity" className="text-sm">Opacity</Label>
-                          <span className="text-sm text-muted-foreground">
-                            {Math.round((template.textConfig.bottomShadowOpacity ?? 0.5) * 100)}%
-                          </span>
-                        </div>
-                        <Slider
-                          id="shadowOpacity"
-                          min={0}
-                          max={100}
-                          step={5}
-                          value={[Math.round((template.textConfig.bottomShadowOpacity ?? 0.5) * 100)]}
-                          onValueChange={([value]) => handleTextFieldChange('bottomShadowOpacity', value / 100)}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <Label htmlFor="shadowHeight" className="text-sm">Height</Label>
-                          <span className="text-sm text-muted-foreground">
-                            {template.textConfig.bottomShadowHeight ?? 33}%
-                          </span>
-                        </div>
-                        <Slider
-                          id="shadowHeight"
-                          min={10}
-                          max={100}
-                          step={5}
-                          value={[template.textConfig.bottomShadowHeight ?? 33]}
-                          onValueChange={([value]) => handleTextFieldChange('bottomShadowHeight', value)}
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-
                 {/* Event Image Frame Settings */}
                 <div className="space-y-3">
                   <Label className="text-sm font-medium">Event Image Frame</Label>
@@ -1190,56 +1192,7 @@ export const TemplateEditor = ({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="fontSize">Font Size (px)</Label>
-                    <Input
-                      id="fontSize"
-                      type="number"
-                      min={12}
-                      max={200}
-                      value={template.textConfig.fontSize}
-                      onChange={(e) => handleTextFieldChange('fontSize', parseInt(e.target.value) || 24)}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="lineHeight">Line Height</Label>
-                      <span className="text-sm text-muted-foreground">
-                        {(template.textConfig.lineHeight ?? 1.2).toFixed(1)}
-                      </span>
-                    </div>
-                    <Slider
-                      id="lineHeight"
-                      min={80}
-                      max={200}
-                      step={5}
-                      value={[Math.round((template.textConfig.lineHeight ?? 1.2) * 100)]}
-                      onValueChange={([value]) => handleTextFieldChange('lineHeight', value / 100)}
-                    />
-                  </div>
-
-
-                  <div className="space-y-2">
-                    <Label htmlFor="color">Text Color</Label>
-                    <div className="flex gap-2">
-                      <Input
-                        id="color"
-                        type="color"
-                        value={template.textConfig.color}
-                        onChange={(e) => handleTextFieldChange('color', e.target.value)}
-                        className="w-12 h-10 p-1 cursor-pointer"
-                      />
-                      <Input
-                        type="text"
-                        value={template.textConfig.color}
-                        onChange={(e) => handleTextFieldChange('color', e.target.value)}
-                        className="flex-1"
-                      />
-                    </div>
-                  </div>
-
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="textAlign">Text Align</Label>
                     <Select
@@ -1255,30 +1208,6 @@ export const TemplateEditor = ({
                         <SelectItem value="right">Right</SelectItem>
                       </SelectContent>
                     </Select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="x">X Position</Label>
-                    <Input
-                      id="x"
-                      type="number"
-                      min={0}
-                      value={template.textConfig.x}
-                      onChange={(e) => handleTextFieldChange('x', parseInt(e.target.value) || 0)}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="y">Y Position</Label>
-                    <Input
-                      id="y"
-                      type="number"
-                      min={0}
-                      value={template.textConfig.y}
-                      onChange={(e) => handleTextFieldChange('y', parseInt(e.target.value) || 0)}
-                    />
                   </div>
 
                   <div className="space-y-2">
