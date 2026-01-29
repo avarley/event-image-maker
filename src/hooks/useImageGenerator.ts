@@ -100,8 +100,12 @@ export const useImageGenerator = () => {
       });
     }
     if (fields.showDate && event.STARTS_AT) {
+      let dateText = formatDate(event.STARTS_AT, fields);
+      if (fields.dateFullUppercase) {
+        dateText = dateText.toUpperCase();
+      }
       lines.push({
-        text: formatDate(event.STARTS_AT, fields),
+        text: dateText,
         fontWeight: fields.dateFontWeight || '700',
         fontFamily: fields.dateFontFamily || defaultFontFamily,
         letterSpacing: fields.dateLetterSpacing ?? 0,
@@ -113,25 +117,21 @@ export const useImageGenerator = () => {
     const venuePart = fields.showVenue && event.VENUE_NAME ? event.VENUE_NAME : '';
     const locationPart = fields.showLocation && event.CITY_NAME ? formatLocation(event, fields.locationFormat) : '';
     
+    let venueLocationText = '';
     if (venuePart && locationPart) {
-      lines.push({
-        text: `${venuePart}, ${locationPart}`,
-        fontWeight: fields.venueLocationFontWeight || '700',
-        fontFamily: fields.venueLocationFontFamily || defaultFontFamily,
-        letterSpacing: fields.venueLocationLetterSpacing ?? 0,
-        isEventName: false,
-      });
+      venueLocationText = `${venuePart}, ${locationPart}`;
     } else if (venuePart) {
-      lines.push({
-        text: venuePart,
-        fontWeight: fields.venueLocationFontWeight || '700',
-        fontFamily: fields.venueLocationFontFamily || defaultFontFamily,
-        letterSpacing: fields.venueLocationLetterSpacing ?? 0,
-        isEventName: false,
-      });
+      venueLocationText = venuePart;
     } else if (locationPart) {
+      venueLocationText = locationPart;
+    }
+    
+    if (venueLocationText) {
+      if (fields.venueLocationUppercase) {
+        venueLocationText = venueLocationText.toUpperCase();
+      }
       lines.push({
-        text: locationPart,
+        text: venueLocationText,
         fontWeight: fields.venueLocationFontWeight || '700',
         fontFamily: fields.venueLocationFontFamily || defaultFontFamily,
         letterSpacing: fields.venueLocationLetterSpacing ?? 0,
