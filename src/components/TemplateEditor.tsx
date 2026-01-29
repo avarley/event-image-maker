@@ -1,5 +1,5 @@
-import { useCallback, useState } from 'react';
-import { Upload, Image as ImageIcon, RotateCcw, Plus, Trash2, Save, FolderOpen, FlipHorizontal, FlipVertical } from 'lucide-react';
+import { useCallback, useState, useEffect, useRef } from 'react';
+import { Upload, Image as ImageIcon, RotateCcw, Plus, Trash2, Save, FolderOpen, FlipHorizontal, FlipVertical, Undo2, Redo2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -76,6 +76,105 @@ export const TemplateEditor = ({
   eventImageAspectRatio,
 }: TemplateEditorProps) => {
   const [showSafeZone, setShowSafeZone] = useState(false);
+  
+  // Undo/Redo state
+  const [undoStack, setUndoStack] = useState<Partial<SavedTemplate>[]>([]);
+  const [redoStack, setRedoStack] = useState<Partial<SavedTemplate>[]>([]);
+  const isUndoingRef = useRef(false);
+  const lastTemplateIdRef = useRef<string | null>(null);
+
+  // Reset stacks when template changes
+  useEffect(() => {
+    if (template?.id !== lastTemplateIdRef.current) {
+      setUndoStack([]);
+      setRedoStack([]);
+      lastTemplateIdRef.current = template?.id || null;
+    }
+  }, [template?.id]);
+
+  // Wrap onUpdateTemplate to track history
+  const updateTemplateWithHistory = useCallback(
+    (id: string, updates: Partial<SavedTemplate>) => {
+      if (!template || isUndoingRef.current) {
+        onUpdateTemplate(id, updates);
+        return;
+      }
+
+      // Save current state to undo stack
+      const currentState: Partial<SavedTemplate> = {
+        textConfig: template.textConfig,
+        textEnabled: template.textEnabled,
+        overlays: template.overlays,
+      };
+      
+      setUndoStack(prev => [...prev.slice(-49), currentState]);
+      setRedoStack([]); // Clear redo stack on new action
+      onUpdateTemplate(id, updates);
+    },
+    [template, onUpdateTemplate]
+  );
+
+  const handleUndo = useCallback(() => {
+    if (!template || undoStack.length === 0) return;
+    
+    const previousState = undoStack[undoStack.length - 1];
+    const currentState: Partial<SavedTemplate> = {
+      textConfig: template.textConfig,
+      textEnabled: template.textEnabled,
+      overlays: template.overlays,
+    };
+    
+    setUndoStack(prev => prev.slice(0, -1));
+    setRedoStack(prev => [...prev, currentState]);
+    
+    isUndoingRef.current = true;
+    onUpdateTemplate(template.id, previousState);
+    isUndoingRef.current = false;
+    
+    toast.success('Undone');
+  }, [template, undoStack, onUpdateTemplate]);
+
+  const handleRedo = useCallback(() => {
+    if (!template || redoStack.length === 0) return;
+    
+    const nextState = redoStack[redoStack.length - 1];
+    const currentState: Partial<SavedTemplate> = {
+      textConfig: template.textConfig,
+      textEnabled: template.textEnabled,
+      overlays: template.overlays,
+    };
+    
+    setRedoStack(prev => prev.slice(0, -1));
+    setUndoStack(prev => [...prev, currentState]);
+    
+    isUndoingRef.current = true;
+    onUpdateTemplate(template.id, nextState);
+    isUndoingRef.current = false;
+    
+    toast.success('Redone');
+  }, [template, redoStack, onUpdateTemplate]);
+
+  // Keyboard shortcuts for undo/redo
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+      const modifierKey = isMac ? e.metaKey : e.ctrlKey;
+
+      if (modifierKey && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        handleUndo();
+      } else if (modifierKey && e.key === 'z' && e.shiftKey) {
+        e.preventDefault();
+        handleRedo();
+      } else if (modifierKey && e.key === 'y') {
+        e.preventDefault();
+        handleRedo();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleUndo, handleRedo]);
 
   const handleFileChange = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -119,29 +218,29 @@ export const TemplateEditor = ({
   const handleTextConfigChange = useCallback(
     (textConfig: TextConfig) => {
       if (!template) return;
-      onUpdateTemplate(template.id, { textConfig });
+      updateTemplateWithHistory(template.id, { textConfig });
     },
-    [template, onUpdateTemplate]
+    [template, updateTemplateWithHistory]
   );
 
   const handleTextFieldChange = useCallback(
     (key: keyof TextConfig, value: string | number | boolean) => {
       if (!template) return;
-      onUpdateTemplate(template.id, {
+      updateTemplateWithHistory(template.id, {
         textConfig: {
           ...template.textConfig,
           [key]: value,
         },
       });
     },
-    [template, onUpdateTemplate]
+    [template, updateTemplateWithHistory]
   );
 
   const handleFieldToggle = useCallback(
     (fieldKey: keyof TextFieldConfig, value: boolean | string | number) => {
       if (!template) return;
       const currentFields = template.textConfig.fields || DEFAULT_TEXT_FIELDS;
-      onUpdateTemplate(template.id, {
+      updateTemplateWithHistory(template.id, {
         textConfig: {
           ...template.textConfig,
           fields: {
@@ -151,7 +250,7 @@ export const TemplateEditor = ({
         },
       });
     },
-    [template, onUpdateTemplate]
+    [template, updateTemplateWithHistory]
   );
 
   const handleResetToDefaults = useCallback(() => {
@@ -266,9 +365,9 @@ export const TemplateEditor = ({
   const handleOverlaysChange = useCallback(
     (overlays: SavedOverlay[]) => {
       if (!template) return;
-      onUpdateTemplate(template.id, { overlays });
+      updateTemplateWithHistory(template.id, { overlays });
     },
-    [template, onUpdateTemplate]
+    [template, updateTemplateWithHistory]
   );
 
   // Overlay Preset Management
@@ -407,7 +506,33 @@ export const TemplateEditor = ({
       <Card>
         <CardContent className="p-4">
           <div className="mb-2 flex items-center justify-between">
-            <span className="text-sm font-medium">Live Preview</span>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">Live Preview</span>
+              {template.baseplateDataUrl && (
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={handleUndo}
+                    disabled={undoStack.length === 0}
+                    title="Undo (⌘Z)"
+                  >
+                    <Undo2 className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={handleRedo}
+                    disabled={redoStack.length === 0}
+                    title="Redo (⌘⇧Z)"
+                  >
+                    <Redo2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+            </div>
             <div className="flex items-center gap-4">
               {template.baseplateDataUrl && (
                 <>
