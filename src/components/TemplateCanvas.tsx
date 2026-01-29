@@ -44,6 +44,10 @@ export const TemplateCanvas = ({
   const [initialMousePos, setInitialMousePos] = useState({ x: 0, y: 0 });
   const [initialRotation, setInitialRotation] = useState(0);
   
+  // Event image frame dragging state
+  const [isDraggingEventFrame, setIsDraggingEventFrame] = useState(false);
+  const [eventFrameDragStart, setEventFrameDragStart] = useState({ x: 0, y: 0 });
+  
   // Snapping state
   const [snappedToX, setSnappedToX] = useState(false);
   const [snappedToY, setSnappedToY] = useState(false);
@@ -100,6 +104,42 @@ export const TemplateCanvas = ({
       const rect = containerRef.current.getBoundingClientRect();
       const mouseX = (e.clientX - rect.left) / scale;
       const mouseY = (e.clientY - rect.top) / scale;
+
+      // Handle event frame dragging
+      if (isDraggingEventFrame) {
+        const deltaX = mouseX - eventFrameDragStart.x;
+        const deltaY = mouseY - eventFrameDragStart.y;
+        
+        // Get current frame dimensions
+        const frameWidthPercent = textConfig.eventImageWidth ?? 80;
+        const frameHeightPercent = textConfig.eventImageHeight ?? 50;
+        const frameWidth = baseplateSize.width * (frameWidthPercent / 100);
+        const frameHeight = baseplateSize.height * (frameHeightPercent / 100);
+        
+        // Convert delta to percentage change
+        const maxXRange = baseplateSize.width - frameWidth;
+        const maxYRange = baseplateSize.height - frameHeight;
+        
+        const currentXPercent = textConfig.eventImageX ?? 50;
+        const currentYPercent = textConfig.eventImageY ?? 30;
+        
+        // Calculate new position as percentage
+        let newXPercent = currentXPercent + (deltaX / maxXRange) * 100;
+        let newYPercent = currentYPercent + (deltaY / maxYRange) * 100;
+        
+        // Clamp to 0-100
+        newXPercent = Math.max(0, Math.min(100, newXPercent));
+        newYPercent = Math.max(0, Math.min(100, newYPercent));
+        
+        onTextConfigChange({
+          ...textConfig,
+          eventImageX: Math.round(newXPercent),
+          eventImageY: Math.round(newYPercent),
+        });
+        
+        setEventFrameDragStart({ x: mouseX, y: mouseY });
+        return;
+      }
 
       // Handle text dragging
       if (isDraggingText) {
@@ -226,6 +266,8 @@ export const TemplateCanvas = ({
     },
     [
       isDraggingText,
+      isDraggingEventFrame,
+      eventFrameDragStart,
       dragOffset,
       scale,
       baseplateSize,
@@ -249,6 +291,7 @@ export const TemplateCanvas = ({
     setResizeCorner(null);
     setSnappedToX(false);
     setSnappedToY(false);
+    setIsDraggingEventFrame(false);
   }, []);
 
   const handleOverlayMouseDown = useCallback(
@@ -304,6 +347,22 @@ export const TemplateCanvas = ({
       setInitialRotation(overlay.rotation || 0);
     },
     [overlays]
+  );
+
+  // Event frame drag handler
+  const handleEventFrameMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (!containerRef.current) return;
+      
+      const rect = containerRef.current.getBoundingClientRect();
+      const mouseX = (e.clientX - rect.left) / scale;
+      const mouseY = (e.clientY - rect.top) / scale;
+      
+      setIsDraggingEventFrame(true);
+      setEventFrameDragStart({ x: mouseX, y: mouseY });
+    },
+    [scale]
   );
 
   // Calculate text alignment offset for display
@@ -515,10 +574,12 @@ export const TemplateCanvas = ({
       {/* Overlays BELOW event image layer */}
       {belowOverlays.map(renderOverlay)}
 
-      {/* Event image frame preview */}
+      {/* Event image frame preview - draggable */}
       {showEventImageOverlay && baseplateSize.width > 0 && (
         <div
-          className="absolute border-2 border-dashed border-blue-500 bg-blue-500/20 pointer-events-none flex items-center justify-center"
+          className={`absolute border-2 border-dashed border-blue-500 bg-blue-500/20 flex items-center justify-center cursor-grab active:cursor-grabbing hover:bg-blue-500/30 transition-colors ${
+            isDraggingEventFrame ? 'ring-2 ring-blue-500 ring-offset-2' : ''
+          }`}
           style={{
             left: eventImageBounds.x * scale,
             top: eventImageBounds.y * scale,
@@ -526,9 +587,10 @@ export const TemplateCanvas = ({
             height: eventImageBounds.height * scale,
             borderRadius: (textConfig.eventImageBorderRadius ?? 0) * scale,
           }}
+          onMouseDown={handleEventFrameMouseDown}
         >
-          <div className="text-blue-500 text-sm font-medium bg-white/80 px-2 py-1 rounded">
-            Event Image Frame
+          <div className="text-blue-500 text-sm font-medium bg-white/80 px-2 py-1 rounded pointer-events-none">
+            Event Image Frame (drag to move)
           </div>
         </div>
       )}
