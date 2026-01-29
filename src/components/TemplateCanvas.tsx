@@ -708,7 +708,6 @@ export const TemplateCanvas = ({
                     fontSize: fontSize * scale,
                     fontWeight: parseInt(fontWeight),
                     color: textConfig.color,
-                    textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
                     lineHeight: textConfig.lineHeight ?? 1.2,
                     letterSpacing: `${letterSpacing}px`,
                   }}
