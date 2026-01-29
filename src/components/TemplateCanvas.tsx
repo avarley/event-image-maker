@@ -10,7 +10,6 @@ interface TemplateCanvasProps {
   onTextConfigChange: (config: TextConfig) => void;
   onOverlaysChange: (overlays: SavedOverlay[]) => void;
   showSafeZone?: boolean;
-  showEventImageOverlay?: boolean;
   eventImageAspectRatio?: number; // Width / Height of actual event image
 }
 
@@ -26,7 +25,6 @@ export const TemplateCanvas = ({
   onTextConfigChange,
   onOverlaysChange,
   showSafeZone = false,
-  showEventImageOverlay = false,
   eventImageAspectRatio,
 }: TemplateCanvasProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -627,8 +625,8 @@ export const TemplateCanvas = ({
         />
       )}
 
-      {/* Event image frame preview - draggable */}
-      {showEventImageOverlay && baseplateSize.width > 0 && (
+      {/* Event image frame preview - always visible and draggable */}
+      {baseplateSize.width > 0 && (
         <div
           className={`absolute border-2 border-dashed border-blue-500 bg-blue-500/20 flex items-center justify-center cursor-grab active:cursor-grabbing hover:bg-blue-500/30 transition-colors ${
             isDraggingEventFrame ? 'ring-2 ring-blue-500 ring-offset-2' : ''
@@ -644,7 +642,7 @@ export const TemplateCanvas = ({
           onMouseDown={handleEventFrameMouseDown}
         >
           <div className="text-blue-500 text-sm font-medium bg-white/80 px-2 py-1 rounded pointer-events-none">
-            Event Image Frame (drag to move)
+            Event Image (drag to move)
           </div>
         </div>
       )}
