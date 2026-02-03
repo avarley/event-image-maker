@@ -111,6 +111,11 @@ export const useTemplateStorage = () => {
     setActiveTemplateId(duplicate.id);
   }, [templates]);
 
+  const addTemplate = useCallback((template: SavedTemplate) => {
+    setTemplates((prev) => [...prev, template]);
+    setActiveTemplateId(template.id);
+  }, []);
+
   const activeTemplate = templates.find((t) => t.id === activeTemplateId) || null;
 
   return {
@@ -122,5 +127,6 @@ export const useTemplateStorage = () => {
     updateTemplate,
     deleteTemplate,
     duplicateTemplate,
+    addTemplate,
   };
 };
