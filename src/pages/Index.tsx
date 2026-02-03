@@ -2,14 +2,17 @@ import { useState, useCallback, useMemo, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Wand2, Loader2 } from 'lucide-react';
+import { Wand2, Loader2, Users, FolderOpen } from 'lucide-react';
 import { toast } from 'sonner';
 import { TemplateList } from '@/components/TemplateList';
 import { TemplateEditor } from '@/components/TemplateEditor';
 import { EventSelector } from '@/components/EventSelector';
 import { ImagePreview } from '@/components/ImagePreview';
+import { CommunityTemplates } from '@/components/CommunityTemplates';
+import { PublishTemplateDialog } from '@/components/PublishTemplateDialog';
 import { useTemplateStorage } from '@/hooks/useTemplateStorage';
 import { useImageGenerator } from '@/hooks/useImageGenerator';
+import { useSharedTemplates } from '@/hooks/useSharedTemplates';
 import {
   EventData,
   TemplateConfig,
@@ -30,7 +33,17 @@ const Index = () => {
     updateTemplate,
     deleteTemplate,
     duplicateTemplate,
+    addTemplate,
   } = useTemplateStorage();
+
+  const {
+    sharedTemplates,
+    isLoading: isLoadingShared,
+    isPublishing,
+    fetchSharedTemplates,
+    publishTemplate,
+    importTemplate,
+  } = useSharedTemplates();
 
   const [feedUrl, setFeedUrl] = useState(DEFAULT_FEED_URL);
   const [events, setEvents] = useState<EventData[]>([]);
@@ -40,6 +53,14 @@ const Index = () => {
   const [isLoadingEvents, setIsLoadingEvents] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([]);
+  const [templateSection, setTemplateSection] = useState<'my' | 'community'>('my');
+  const [publishDialogOpen, setPublishDialogOpen] = useState(false);
+  const [templateToPublish, setTemplateToPublish] = useState<SavedTemplate | null>(null);
+
+  // Fetch community templates on mount
+  useEffect(() => {
+    fetchSharedTemplates();
+  }, [fetchSharedTemplates]);
 
   const { generateImage } = useImageGenerator();
 
@@ -268,27 +289,69 @@ const Index = () => {
           <TabsTrigger value="generate">3. Generate</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="template" className="mt-0">
-          <div className="flex h-[calc(100vh-280px)] min-h-[500px] border rounded-lg overflow-hidden">
-            <div className="w-64 flex-shrink-0">
-              <TemplateList
-                templates={templates}
-                activeTemplateId={activeTemplateId}
-                onSelectTemplate={setActiveTemplateId}
-                onCreateTemplate={createTemplate}
-                onDeleteTemplate={deleteTemplate}
-                onDuplicateTemplate={duplicateTemplate}
-                onRenameTemplate={handleRenameTemplate}
+        <TabsContent value="template" className="mt-0 space-y-4">
+          {/* Template Section Tabs */}
+          <div className="flex gap-2">
+            <Button
+              variant={templateSection === 'my' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setTemplateSection('my')}
+            >
+              <FolderOpen className="h-4 w-4 mr-2" />
+              My Templates {templates.length > 0 && `(${templates.length})`}
+            </Button>
+            <Button
+              variant={templateSection === 'community' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setTemplateSection('community')}
+            >
+              <Users className="h-4 w-4 mr-2" />
+              Community {sharedTemplates.length > 0 && `(${sharedTemplates.length})`}
+            </Button>
+          </div>
+
+          {templateSection === 'my' ? (
+            <div className="flex h-[calc(100vh-340px)] min-h-[500px] border rounded-lg overflow-hidden">
+              <div className="w-64 flex-shrink-0">
+                <TemplateList
+                  templates={templates}
+                  activeTemplateId={activeTemplateId}
+                  onSelectTemplate={setActiveTemplateId}
+                  onCreateTemplate={createTemplate}
+                  onDeleteTemplate={deleteTemplate}
+                  onDuplicateTemplate={duplicateTemplate}
+                  onRenameTemplate={handleRenameTemplate}
+                  onPublishTemplate={(id) => {
+                    const template = templates.find(t => t.id === id);
+                    if (template) {
+                      setTemplateToPublish(template);
+                      setPublishDialogOpen(true);
+                    }
+                  }}
+                />
+              </div>
+              <TemplateEditor
+                template={activeTemplate}
+                allTemplates={templates}
+                onUpdateTemplate={updateTemplate}
+                sampleEventName={sampleEventName}
+                eventImageAspectRatio={eventImageAspectRatio}
               />
             </div>
-            <TemplateEditor
-              template={activeTemplate}
-              allTemplates={templates}
-              onUpdateTemplate={updateTemplate}
-              sampleEventName={sampleEventName}
-              eventImageAspectRatio={eventImageAspectRatio}
-            />
-          </div>
+          ) : (
+            <div className="border rounded-lg p-4">
+              <CommunityTemplates
+                sharedTemplates={sharedTemplates}
+                isLoading={isLoadingShared}
+                onRefresh={fetchSharedTemplates}
+                onImport={importTemplate}
+                onTemplateImported={(imported) => {
+                  addTemplate(imported);
+                  setTemplateSection('my');
+                }}
+              />
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="events">
@@ -389,6 +452,23 @@ const Index = () => {
           />
         </TabsContent>
       </Tabs>
+
+      {/* Publish Dialog */}
+      <PublishTemplateDialog
+        open={publishDialogOpen}
+        onOpenChange={setPublishDialogOpen}
+        templateName={templateToPublish?.name || ''}
+        isPublishing={isPublishing}
+        onPublish={async (authorName) => {
+          if (templateToPublish) {
+            const success = await publishTemplate(templateToPublish, authorName);
+            if (success) {
+              setPublishDialogOpen(false);
+              setTemplateToPublish(null);
+            }
+          }
+        }}
+      />
     </div>
   );
 };
